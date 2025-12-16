@@ -1233,7 +1233,17 @@
             addToOrder(itemId) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
-                    this.currentOrder.push({...item});
+                    // Check if item already exists in order
+                    const existingItem = this.currentOrder.find(orderItem => orderItem.id === itemId);
+                    
+                    if (existingItem) {
+                        // Increment quantity if item exists
+                        existingItem.quantity = (existingItem.quantity || 1) + 1;
+                    } else {
+                        // Add new item with quantity 1
+                        this.currentOrder.push({...item, quantity: 1});
+                    }
+                    
                     this.updateOrderDisplay();
                     this.playSound('order');
                 }
@@ -1247,20 +1257,27 @@
 
             updateOrderDisplay() {
                 const orderItemsDiv = document.getElementById('orderItems');
-                const subtotal = this.currentOrder.reduce((sum, item) => sum + item.price, 0);
+                const subtotal = this.currentOrder.reduce((sum, item) => {
+                    const quantity = item.quantity || 1;
+                    return sum + (item.price * quantity);
+                }, 0);
 
                 if (this.currentOrder.length === 0) {
                     orderItemsDiv.innerHTML = '<div class="empty-state">No items added</div>';
                 } else {
-                    orderItemsDiv.innerHTML = this.currentOrder.map((item, index) => `
-                        <div class="order-item">
-                            <div class="item-details">
-                                <h4>${item.name}</h4>
-                                <div class="item-price">RM ${item.price.toFixed(2)}</div>
+                    orderItemsDiv.innerHTML = this.currentOrder.map((item, index) => {
+                        const quantity = item.quantity || 1;
+                        const itemTotal = item.price * quantity;
+                        return `
+                            <div class="order-item">
+                                <div class="item-details">
+                                    <h4>${item.name} ${quantity > 1 ? `(x${quantity})` : ''}</h4>
+                                    <div class="item-price">RM ${item.price.toFixed(2)} ${quantity > 1 ? `• Total: RM ${itemTotal.toFixed(2)}` : ''}</div>
+                                </div>
+                                <button class="remove-btn" onclick="app.removeFromOrder(${index})">Remove</button>
                             </div>
-                            <button class="remove-btn" onclick="app.removeFromOrder(${index})">Remove</button>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
 
                 document.getElementById('subtotal').textContent = `RM ${subtotal.toFixed(2)}`;
@@ -1353,9 +1370,23 @@
                     }
                 }
 
+                // Expand items with quantities into separate items for kitchen
+                const expandedItems = [];
+                this.currentOrder.forEach(item => {
+                    const quantity = item.quantity || 1;
+                    for (let i = 0; i < quantity; i++) {
+                        expandedItems.push({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            category: item.category
+                        });
+                    }
+                });
+
                 const order = {
                     id: Date.now(),
-                    items: [...this.currentOrder],
+                    items: expandedItems,
                     total: this.currentPaymentTotal,
                     paymentMethod: this.currentPaymentMethod,
                     timestamp: new Date().toISOString(),
@@ -1783,40 +1814,46 @@
                     const shift = snapshot.val();
                     const reportContent = document.getElementById('shiftReportContent');
 
-                    const itemsHtml = Object.entries(shift.itemsSold)
-                        .sort((a, b) => b[1].count - a[1].count)
-                        .map(([name, data]) => `
-                            <div class="sold-item">
-                                <span>${name}</span>
-                                <span class="sold-item-count">${data.count}x • RM ${data.revenue.toFixed(2)}</span>
-                            </div>
-                        `).join('');
+                    // Handle empty itemsSold
+                    let itemsHtml = '';
+                    if (shift.itemsSold && Object.keys(shift.itemsSold).length > 0) {
+                        itemsHtml = Object.entries(shift.itemsSold)
+                            .sort((a, b) => b[1].count - a[1].count)
+                            .map(([name, data]) => `
+                                <div class="sold-item">
+                                    <span>${name}</span>
+                                    <span class="sold-item-count">${data.count}x • RM ${data.revenue.toFixed(2)}</span>
+                                </div>
+                            `).join('');
+                    } else {
+                        itemsHtml = '<div class="empty-state">No items sold yet</div>';
+                    }
 
                     reportContent.innerHTML = `
                         <div class="report-grid">
                             <div class="report-stat">
                                 <div class="stat-label">Total Sales</div>
-                                <div class="stat-value">RM ${shift.totalSales.toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.totalSales || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Orders</div>
-                                <div class="stat-value">${shift.orderCount}</div>
+                                <div class="stat-value">${shift.orderCount || 0}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Cash</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods.cash || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods?.cash || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Card</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods.card || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods?.card || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">E-Wallet</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods.ewallet || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods?.ewallet || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Preorder</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods.preorder || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods?.preorder || 0).toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="items-sold-list">
@@ -1829,7 +1866,7 @@
                     this.playSound('click');
                 } catch (error) {
                     console.error('Error opening shift report:', error);
-                    alert('Error loading shift report');
+                    alert('Error loading shift report: ' + error.message);
                 }
             },
 
