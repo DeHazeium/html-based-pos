@@ -30,7 +30,6 @@
             min-height: 100vh;
         }
 
-        /* Login Screen */
         .login-screen {
             display: flex;
             justify-content: center;
@@ -127,7 +126,6 @@
             color: var(--bg-primary);
         }
 
-        /* Main Container */
         .container {
             max-width: 100%;
             padding: 20px;
@@ -208,7 +206,6 @@
             display: block;
         }
 
-        /* Cashier Layout */
         .cashier-layout {
             display: grid;
             grid-template-columns: 1fr 420px;
@@ -416,7 +413,6 @@
             border-color: var(--text-primary);
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -506,7 +502,6 @@
             border-color: var(--text-primary);
         }
 
-        /* Kitchen Orders */
         .kitchen-orders {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -577,7 +572,6 @@
             font-size: 12px;
         }
 
-        /* Animations */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -605,7 +599,6 @@
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
             <div class="login-title">POS SYSTEM</div>
@@ -639,7 +632,6 @@
             <button class="logout-btn" onclick="app.logout()">Logout</button>
         </div>
 
-        <!-- Cashier Panel -->
         <div id="cashier" class="panel active">
             <div class="stats">
                 <div class="stat-card">
@@ -680,7 +672,6 @@
             </div>
         </div>
 
-        <!-- Kitchen Panel -->
         <div id="kitchen" class="panel">
             <div class="menu-section">
                 <div class="section-title">Orders</div>
@@ -688,7 +679,6 @@
             </div>
         </div>
 
-        <!-- History Panel -->
         <div id="history" class="panel">
             <div class="menu-section">
                 <div class="section-title">Order History</div>
@@ -697,7 +687,6 @@
         </div>
     </div>
 
-    <!-- Payment Modal -->
     <div id="paymentModal" class="modal">
         <div class="modal-content">
             <h3>Payment</h3>
@@ -742,25 +731,23 @@
             allShifts: [],
             selectedPaymentMethod: null,
 
-            async init() {
-                await this.loadData();
+            init() {
+                this.loadData();
                 this.renderMenu();
                 this.renderMenuEditor();
                 this.updateStats();
                 if (!this.currentShift.startTime) {
                     this.currentShift.startTime = new Date().toISOString();
-                    await this.saveData();
+                    this.saveData();
                 }
             },
 
-            async loadData() {
+            loadData() {
                 try {
-                    // Load menu items
-                    const menuResult = await window.storage.get('pos-menu');
-                    if (menuResult) {
-                        this.menuItems = JSON.parse(menuResult.value);
+                    const menuData = localStorage.getItem('pos-menu');
+                    if (menuData) {
+                        this.menuItems = JSON.parse(menuData);
                     } else {
-                        // Default menu
                         this.menuItems = [
                             { id: 1, name: 'Nasi Goreng Beef', price: 9.00 },
                             { id: 2, name: 'Nasi Goreng Ayam', price: 8.50 },
@@ -772,44 +759,40 @@
                             { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50 },
                             { id: 9, name: 'Milk', price: 2.00 }
                         ];
-                        await this.saveData();
+                        this.saveData();
                     }
 
-                    // Load current shift
-                    const shiftResult = await window.storage.get('pos-current-shift');
-                    if (shiftResult) {
-                        this.currentShift = JSON.parse(shiftResult.value);
+                    const shiftData = localStorage.getItem('pos-current-shift');
+                    if (shiftData) {
+                        this.currentShift = JSON.parse(shiftData);
                     }
 
-                    // Load kitchen orders
-                    const kitchenResult = await window.storage.get('pos-kitchen-orders');
-                    if (kitchenResult) {
-                        this.kitchenOrders = JSON.parse(kitchenResult.value);
+                    const kitchenData = localStorage.getItem('pos-kitchen-orders');
+                    if (kitchenData) {
+                        this.kitchenOrders = JSON.parse(kitchenData);
                     }
 
-                    // Load all shifts
-                    const shiftsResult = await window.storage.get('pos-all-shifts');
-                    if (shiftsResult) {
-                        this.allShifts = JSON.parse(shiftsResult.value);
+                    const shiftsData = localStorage.getItem('pos-all-shifts');
+                    if (shiftsData) {
+                        this.allShifts = JSON.parse(shiftsData);
                     }
 
-                    // Load completed orders
-                    const completedResult = await window.storage.get('pos-completed-orders');
-                    if (completedResult) {
-                        this.completedOrders = JSON.parse(completedResult.value);
+                    const completedData = localStorage.getItem('pos-completed-orders');
+                    if (completedData) {
+                        this.completedOrders = JSON.parse(completedData);
                     }
                 } catch (error) {
                     console.error('Error loading data:', error);
                 }
             },
 
-            async saveData() {
+            saveData() {
                 try {
-                    await window.storage.set('pos-menu', JSON.stringify(this.menuItems));
-                    await window.storage.set('pos-current-shift', JSON.stringify(this.currentShift));
-                    await window.storage.set('pos-kitchen-orders', JSON.stringify(this.kitchenOrders));
-                    await window.storage.set('pos-all-shifts', JSON.stringify(this.allShifts));
-                    await window.storage.set('pos-completed-orders', JSON.stringify(this.completedOrders));
+                    localStorage.setItem('pos-menu', JSON.stringify(this.menuItems));
+                    localStorage.setItem('pos-current-shift', JSON.stringify(this.currentShift));
+                    localStorage.setItem('pos-kitchen-orders', JSON.stringify(this.kitchenOrders));
+                    localStorage.setItem('pos-all-shifts', JSON.stringify(this.allShifts));
+                    localStorage.setItem('pos-completed-orders', JSON.stringify(this.completedOrders));
                 } catch (error) {
                     console.error('Error saving data:', error);
                 }
@@ -1006,7 +989,7 @@
                 document.getElementById('changeAmount').textContent = change >= 0 ? change.toFixed(2) : '0';
             },
 
-            async completePayment() {
+            completePayment() {
                 if (!this.selectedPaymentMethod) {
                     alert('Select payment method');
                     return;
@@ -1036,7 +1019,7 @@
                 this.currentShift.orders.push(order);
                 this.currentShift.sales += order.total;
 
-                await this.saveData();
+                this.saveData();
 
                 this.currentOrder = [];
                 this.renderCurrentOrder();
@@ -1050,7 +1033,7 @@
                 document.getElementById('shiftSales').textContent = `RM ${this.currentShift.sales.toFixed(2)}`;
             },
 
-            async closeShift() {
+            closeShift() {
                 if (this.currentShift.orders.length === 0) {
                     alert('No orders in shift');
                     return;
@@ -1063,7 +1046,7 @@
                 };
 
                 this.allShifts.push(shiftData);
-                await this.saveData();
+                this.saveData();
 
                 const dataStr = JSON.stringify(shiftData, null, 2);
                 const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1074,7 +1057,7 @@
                 link.click();
 
                 this.currentShift = { orders: [], sales: 0, startTime: new Date().toISOString() };
-                await this.saveData();
+                this.saveData();
                 this.updateStats();
                 this.playSound('success');
             },
@@ -1101,12 +1084,12 @@
                 `).join('');
             },
 
-            async completeKitchenOrder(orderId) {
+            completeKitchenOrder(orderId) {
                 const order = this.kitchenOrders.find(o => o.id === orderId);
                 if (order) {
                     order.status = 'completed';
                     order.completedAt = new Date().toISOString();
-                    await this.saveData();
+                    this.saveData();
                     this.renderKitchenOrders();
                     this.playSound('success');
                 }
@@ -1137,35 +1120,35 @@
                 `).join('');
             },
 
-            async updateItemName(itemId, newName) {
+            updateItemName(itemId, newName) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
                     item.name = newName;
-                    await this.saveData();
+                    this.saveData();
                     this.renderMenu();
                 }
             },
 
-            async updateItemPrice(itemId, newPrice) {
+            updateItemPrice(itemId, newPrice) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
                     item.price = parseFloat(newPrice);
-                    await this.saveData();
+                    this.saveData();
                     this.renderMenu();
                 }
             },
 
-            async deleteItem(itemId) {
+            deleteItem(itemId) {
                 if (confirm('Delete this item?')) {
                     this.menuItems = this.menuItems.filter(i => i.id !== itemId);
-                    await this.saveData();
+                    this.saveData();
                     this.renderMenu();
                     this.renderMenuEditor();
                     this.playSound('click');
                 }
             },
 
-            async addNewItem() {
+            addNewItem() {
                 const name = prompt('Item name:');
                 const price = parseFloat(prompt('Item price:'));
                 
@@ -1176,7 +1159,7 @@
                         price: price
                     };
                     this.menuItems.push(newItem);
-                    await this.saveData();
+                    this.saveData();
                     this.renderMenu();
                     this.renderMenuEditor();
                     this.playSound('success');
