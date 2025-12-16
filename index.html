@@ -1036,15 +1036,10 @@
                 <label>Customer Name</label>
                 <input type="text" id="preorderCustomer" placeholder="Enter customer name">
             </div>
-            
-            <div class="form-group">
-                <label>Select Items</label>
-                <div class="menu-grid" id="preorderMenuGrid"></div>
-            </div>
 
             <div class="form-group">
                 <label>Selected Items</label>
-                <div id="preorderSelectedItems" style="background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; min-height: 100px; max-height: 200px; overflow-y: auto;">
+                <div id="preorderSelectedItems" style="background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; min-height: 100px; max-height: 250px; overflow-y: auto;">
                     <div class="empty-state" style="padding: 20px;">No items selected</div>
                 </div>
             </div>
@@ -1053,6 +1048,11 @@
                 <div style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px;">
                     TOTAL: RM <span id="preorderTotal">0.00</span>
                 </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Add Items</label>
+                <div class="menu-grid" id="preorderMenuGrid"></div>
             </div>
             
             <button class="submit-btn" onclick="app.createPreorder()">CREATE PREORDER</button>
@@ -1648,8 +1648,21 @@
             addToPreorder(itemId) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
-                    this.preorderItems.push({...item});
-                    const total = this.preorderItems.reduce((sum, item) => sum + item.price, 0);
+                    // Check if item already exists in preorder
+                    const existingItem = this.preorderItems.find(orderItem => orderItem.id === itemId);
+                    
+                    if (existingItem) {
+                        // Increment quantity if item exists
+                        existingItem.quantity = (existingItem.quantity || 1) + 1;
+                    } else {
+                        // Add new item with quantity 1
+                        this.preorderItems.push({...item, quantity: 1});
+                    }
+                    
+                    const total = this.preorderItems.reduce((sum, item) => {
+                        const quantity = item.quantity || 1;
+                        return sum + (item.price * quantity);
+                    }, 0);
                     document.getElementById('preorderTotal').textContent = total.toFixed(2);
                     
                     // Update selected items display
@@ -1666,20 +1679,27 @@
                     return;
                 }
 
-                selectedDiv.innerHTML = this.preorderItems.map((item, index) => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
-                        <div>
-                            <div style="font-size: 14px; font-weight: 500;">${item.name}</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">RM ${item.price.toFixed(2)}</div>
+                selectedDiv.innerHTML = this.preorderItems.map((item, index) => {
+                    const quantity = item.quantity || 1;
+                    const itemTotal = item.price * quantity;
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px; font-weight: 500;">${item.name} ${quantity > 1 ? `(x${quantity})` : ''}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">RM ${item.price.toFixed(2)} ${quantity > 1 ? `• Total: RM ${itemTotal.toFixed(2)}` : ''}</div>
+                            </div>
+                            <button onclick="app.removeFromPreorder(${index})" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 5px 10px; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;">Remove</button>
                         </div>
-                        <button onclick="app.removeFromPreorder(${index})" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 5px 10px; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;">Remove</button>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             },
 
             removeFromPreorder(index) {
                 this.preorderItems.splice(index, 1);
-                const total = this.preorderItems.reduce((sum, item) => sum + item.price, 0);
+                const total = this.preorderItems.reduce((sum, item) => {
+                    const quantity = item.quantity || 1;
+                    return sum + (item.price * quantity);
+                }, 0);
                 document.getElementById('preorderTotal').textContent = total.toFixed(2);
                 this.updatePreorderItemsList();
                 this.playSound('click');
@@ -1693,11 +1713,30 @@
                     return;
                 }
 
+                // Expand items with quantities into separate items
+                const expandedItems = [];
+                this.preorderItems.forEach(item => {
+                    const quantity = item.quantity || 1;
+                    for (let i = 0; i < quantity; i++) {
+                        expandedItems.push({
+                            id: item.id,
+                            name: item.name,
+                            price: item.price,
+                            category: item.category
+                        });
+                    }
+                });
+
+                const total = this.preorderItems.reduce((sum, item) => {
+                    const quantity = item.quantity || 1;
+                    return sum + (item.price * quantity);
+                }, 0);
+
                 const preorder = {
                     id: Date.now(),
                     customerName: customer,
-                    items: [...this.preorderItems],
-                    total: this.preorderItems.reduce((sum, item) => sum + item.price, 0),
+                    items: expandedItems,
+                    total: total,
                     createdAt: new Date().toISOString(),
                     displayTime: new Date().toLocaleString('en-MY', { 
                         day: '2-digit',
