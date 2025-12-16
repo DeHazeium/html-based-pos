@@ -1387,10 +1387,14 @@
                     let stockBadge = '';
                     if (this.stockEnabled) {
                         if (isOutOfStock) {
-                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">OUT</div>';
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">OUT OF STOCK</div>';
                         } else if (isLowStock) {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">${item.stock}</div>`;
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} LEFT</div>`;
+                        } else {
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} IN STOCK</div>`;
                         }
+                    } else {
+                        stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                     }
                     
                     const imageContent = item.image 
@@ -1845,10 +1849,14 @@
                     let stockBadge = '';
                     if (this.stockEnabled) {
                         if (isOutOfStock) {
-                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">OUT</div>';
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">OUT OF STOCK</div>';
                         } else if (isLowStock) {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">${item.stock}</div>`;
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} LEFT</div>`;
+                        } else {
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} IN STOCK</div>`;
                         }
+                    } else {
+                        stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                     }
                     
                     const imageContent = item.image 
