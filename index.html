@@ -1029,7 +1029,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">NEW PREORDER</div>
-                <button class="close-btn" onclick="app.closePreorderModal()">CLOSE</button>
+                <button class="close-btn" onclick="app.closePreorderModal()">✕ CLOSE</button>
             </div>
             
             <div class="form-group">
@@ -1040,6 +1040,15 @@
             <div class="form-group">
                 <label>Pickup Time</label>
                 <input type="datetime-local" id="preorderTime">
+            </div>
+
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select id="preorderPaymentMethod" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 14px; font-family: 'Montserrat', sans-serif;">
+                    <option value="cash">Cash</option>
+                    <option value="card">Card</option>
+                    <option value="ewallet">E-Wallet</option>
+                </select>
             </div>
             
             <div class="form-group">
@@ -1446,11 +1455,22 @@
                         itemsSold: {}
                     };
 
-                    shiftData.totalSales += order.total;
-                    shiftData.orderCount += 1;
+                    // Update totals
+                    shiftData.totalSales = (shiftData.totalSales || 0) + order.total;
+                    shiftData.orderCount = (shiftData.orderCount || 0) + 1;
+                    
+                    // Update payment methods
+                    if (!shiftData.paymentMethods) {
+                        shiftData.paymentMethods = { cash: 0, card: 0, ewallet: 0, preorder: 0 };
+                    }
                     shiftData.paymentMethods[order.paymentMethod] = 
                         (shiftData.paymentMethods[order.paymentMethod] || 0) + order.total;
 
+                    // Update items sold
+                    if (!shiftData.itemsSold) {
+                        shiftData.itemsSold = {};
+                    }
+                    
                     order.items.forEach(item => {
                         if (!shiftData.itemsSold[item.name]) {
                             shiftData.itemsSold[item.name] = { count: 0, revenue: 0 };
@@ -1460,8 +1480,10 @@
                     });
 
                     await window.dbSet(shiftRef, shiftData);
+                    console.log('Shift stats updated successfully:', shiftData);
                 } catch (error) {
                     console.error('Error updating shift stats:', error);
+                    alert('Warning: Shift statistics may not have updated properly');
                 }
             },
 
@@ -1650,6 +1672,7 @@
                 const customer = document.getElementById('preorderCustomer').value.trim();
                 const time = document.getElementById('preorderTime').value;
                 const notes = document.getElementById('preorderNotes').value.trim();
+                const paymentMethod = document.getElementById('preorderPaymentMethod').value;
 
                 if (!customer || !time || this.preorderItems.length === 0) {
                     alert('Please fill in customer name, pickup time, and add items');
@@ -1661,6 +1684,7 @@
                     customerName: customer,
                     pickupTime: time,
                     notes: notes,
+                    paymentMethod: paymentMethod,
                     items: [...this.preorderItems],
                     total: this.preorderItems.reduce((sum, item) => sum + item.price, 0),
                     createdAt: new Date().toISOString(),
@@ -1703,6 +1727,7 @@
                         <div class="order-badge preorder">Preorder</div>
                         <h3>${preorder.customerName}</h3>
                         <div class="order-time">Pickup: ${preorder.displayTime}</div>
+                        <div class="order-time">Payment: ${(preorder.paymentMethod || 'Not specified').toUpperCase()}</div>
                         ${preorder.notes ? `<div class="order-notes">${preorder.notes}</div>` : ''}
                         <ul>
                             ${preorder.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
@@ -1728,7 +1753,7 @@
                                 
                                 const kitchenOrder = {
                                     ...preorder,
-                                    paymentMethod: 'preorder',
+                                    paymentMethod: preorder.paymentMethod || 'preorder',
                                     timestamp: new Date().toISOString(),
                                     status: 'pending'
                                 };
@@ -1876,9 +1901,10 @@
             },
 
             async clearShift() {
-                if (!confirm('Clear current shift? This will reset all statistics.')) return;
+                if (!confirm('Clear current shift? This will reset all statistics and order history.')) return;
                 
                 try {
+                    // Reset shift data
                     await window.dbSet(window.dbRef(window.db, 'current-shift'), {
                         startTime: new Date().toISOString(),
                         totalSales: 0,
@@ -1887,9 +1913,12 @@
                         itemsSold: {}
                     });
                     
+                    // Clear all kitchen orders (history)
+                    await window.dbSet(window.dbRef(window.db, 'kitchen-orders'), null);
+                    
                     this.closeShiftReport();
                     this.playSound('success');
-                    alert('Shift cleared successfully!');
+                    alert('Shift and order history cleared successfully!');
                 } catch (error) {
                     console.error('Error clearing shift:', error);
                     alert('Error clearing shift');
