@@ -900,10 +900,12 @@
             enteredPin: '',
             isLoggedIn: false,
             
+            menuItems: [],
             currentOrder: [],
             preorderItems: [],
             selectedPaymentMethod: null,
             syncInterval: null,
+            currentShift: null,
 
             async init() {
                 await this.loadMenu();
@@ -1787,6 +1789,11 @@
 
             async addNewItem() {
                 try {
+                    // Ensure menuItems is initialized
+                    if (!this.menuItems || !Array.isArray(this.menuItems)) {
+                        this.menuItems = [];
+                    }
+                    
                     const name = prompt('Enter item name:');
                     console.log('Name entered:', name);
                     
@@ -1811,8 +1818,9 @@
                         return;
                     }
                     
+                    const maxId = this.menuItems.length > 0 ? Math.max(...this.menuItems.map(i => i.id)) : 0;
                     const newItem = {
-                        id: Math.max(...this.menuItems.map(i => i.id), 0) + 1,
+                        id: maxId + 1,
                         name: name.trim(),
                         price: price
                     };
