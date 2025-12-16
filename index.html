@@ -235,13 +235,41 @@
         .menu-item {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            padding: 30px 20px;
+            padding: 0;
             cursor: pointer;
             transition: all 0.3s ease;
             text-align: center;
             border-radius: 4px;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item-image {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 40px;
+        }
+
+        .menu-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .menu-item-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .menu-item::before {
@@ -267,6 +295,11 @@
 
         .menu-item:active {
             transform: translateY(-2px);
+        }
+
+        .menu-item h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
         }
 
         .menu-item h3 {
@@ -905,6 +938,84 @@
             color: var(--text-secondary);
         }
 
+        /* Toggle Switch */
+        #stockToggle:checked + span {
+            background-color: var(--accent);
+        }
+
+        #stockToggle:checked + span + span {
+            transform: translateX(26px);
+            background-color: var(--bg-primary);
+        }
+
+        .stock-item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .stock-item-info {
+            flex: 1;
+        }
+
+        .stock-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .stock-item-price {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .stock-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stock-input {
+            width: 80px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .stock-badge {
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-radius: 2px;
+        }
+
+        .stock-badge.low {
+            background: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .stock-badge.ok {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .stock-badge.out {
+            background: var(--bg-primary);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
         @media (max-width: 1200px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -974,6 +1085,7 @@
                 <button class="mode-btn" data-mode="kitchen" onclick="app.switchMode('kitchen')">KITCHEN</button>
                 <button class="mode-btn" data-mode="preorder" onclick="app.switchMode('preorder')">PREORDER</button>
                 <button class="mode-btn" data-mode="history" onclick="app.switchMode('history')">HISTORY</button>
+                <button class="mode-btn" data-mode="stock" onclick="app.openStockManager()">STOCK</button>
                 <button class="mode-btn" data-mode="report" onclick="app.openShiftReport()">REPORT</button>
             </div>
         </div>
@@ -1114,6 +1226,34 @@
         </div>
     </div>
 
+    <!-- Stock Manager Modal -->
+    <div id="stockManagerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">STOCK MANAGEMENT</div>
+                <button class="close-btn" onclick="app.closeStockManager()">✕ CLOSE</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding: 20px; background: var(--bg-tertiary); border: 1px solid var(--border);">
+                <div style="flex: 1;">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 5px;">Stock Tracking</div>
+                    <div style="font-size: 11px; color: var(--text-secondary); letter-spacing: 1px;">Enable or disable inventory management</div>
+                </div>
+                <label style="position: relative; display: inline-block; width: 60px; height: 34px;">
+                    <input type="checkbox" id="stockToggle" onchange="app.toggleStock()" style="opacity: 0; width: 0; height: 0;">
+                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-primary); transition: .4s; border-radius: 34px; border: 1px solid var(--border);"></span>
+                    <span style="position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                </label>
+            </div>
+
+            <div id="stockItemsList"></div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="submit-btn" onclick="app.saveStock()">SAVE CHANGES</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script type="module">
         // Import Firebase modules
@@ -1154,16 +1294,17 @@
             correctPin: '1234',
             currentMode: 'pos',
             currentOrder: [],
+            stockEnabled: true, // Toggle for stock management
             menuItems: [
-                { id: 1, name: 'Nasi Goreng Beef', price: 9.00, category: 'mains' },
-                { id: 2, name: 'Nasi Goreng Ayam', price: 8.50, category: 'mains' },
-                { id: 3, name: 'Orange Mocktail - Medium', price: 3.00, category: 'drinks' },
-                { id: 4, name: 'Orange Mocktail - Large', price: 5.00, category: 'drinks' },
-                { id: 5, name: 'Red Velvet', price: 5.50, category: 'desserts' },
-                { id: 6, name: 'Matcha', price: 6.00, category: 'desserts' },
-                { id: 7, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'desserts' },
-                { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'combo' },
-                { id: 9, name: 'Milk', price: 2.00, category: 'drinks' }
+                { id: 1, name: 'Nasi Goreng Beef', price: 9.00, category: 'mains', stock: 50, image: '' },
+                { id: 2, name: 'Nasi Goreng Ayam', price: 8.50, category: 'mains', stock: 50, image: '' },
+                { id: 3, name: 'Orange Mocktail - Medium', price: 3.00, category: 'drinks', stock: 30, image: '' },
+                { id: 4, name: 'Orange Mocktail - Large', price: 5.00, category: 'drinks', stock: 30, image: '' },
+                { id: 5, name: 'Red Velvet', price: 5.50, category: 'desserts', stock: 20, image: '' },
+                { id: 6, name: 'Matcha', price: 6.00, category: 'desserts', stock: 20, image: '' },
+                { id: 7, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'desserts', stock: 25, image: '' },
+                { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'combo', stock: 15, image: '' },
+                { id: 9, name: 'Milk', price: 2.00, category: 'drinks', stock: 40, image: '' }
             ],
             preorderItems: [],
             sounds: {
@@ -1219,31 +1360,67 @@
 
             renderMenu() {
                 const grid = document.getElementById('menuGrid');
-                grid.innerHTML = this.menuItems.map(item => `
-                    <div class="menu-item" onclick="app.addToOrder(${item.id})">
-                        <h3>${item.name}</h3>
-                        <div class="price">RM ${item.price.toFixed(2)}</div>
-                    </div>
-                `).join('');
+                grid.innerHTML = this.menuItems.map(item => {
+                    const isOutOfStock = this.stockEnabled && item.stock <= 0;
+                    const isLowStock = this.stockEnabled && item.stock > 0 && item.stock <= 5;
+                    
+                    let stockBadge = '';
+                    if (this.stockEnabled) {
+                        if (isOutOfStock) {
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">OUT</div>';
+                        } else if (isLowStock) {
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">${item.stock}</div>`;
+                        }
+                    }
+                    
+                    const imageContent = item.image 
+                        ? `<img src="${item.image}" alt="${item.name}">` 
+                        : '🍽️';
+                    
+                    return `
+                        <div class="menu-item ${isOutOfStock ? 'disabled' : ''}" onclick="${isOutOfStock ? '' : `app.addToOrder(${item.id})`}" style="${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                            ${stockBadge}
+                            <div class="menu-item-image">${imageContent}</div>
+                            <div class="menu-item-content">
+                                <h3>${item.name}</h3>
+                                <div class="price">RM ${item.price.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             },
 
             addToOrder(itemId) {
                 const item = this.menuItems.find(i => i.id === itemId);
-                if (item) {
-                    // Check if item already exists in order
-                    const existingItem = this.currentOrder.find(orderItem => orderItem.id === itemId);
-                    
-                    if (existingItem) {
-                        // Increment quantity if item exists
-                        existingItem.quantity = (existingItem.quantity || 1) + 1;
-                    } else {
-                        // Add new item with quantity 1
-                        this.currentOrder.push({...item, quantity: 1});
-                    }
-                    
-                    this.updateOrderDisplay();
-                    this.playSound('order');
+                if (!item) return;
+                
+                // Check stock availability
+                if (this.stockEnabled && item.stock <= 0) {
+                    alert(`${item.name} is out of stock!`);
+                    return;
                 }
+                
+                // Check if item already exists in order
+                const existingItem = this.currentOrder.find(orderItem => orderItem.id === itemId);
+                
+                if (existingItem) {
+                    // Check if we have enough stock for one more
+                    if (this.stockEnabled) {
+                        const currentQuantity = existingItem.quantity || 1;
+                        if (item.stock < currentQuantity + 1) {
+                            alert(`Only ${item.stock} ${item.name} available in stock!`);
+                            return;
+                        }
+                    }
+                    // Increment quantity if item exists
+                    existingItem.quantity = (existingItem.quantity || 1) + 1;
+                } else {
+                    // Add new item with quantity 1
+                    this.currentOrder.push({...item, quantity: 1});
+                }
+                
+                this.updateOrderDisplay();
+                this.playSound('order');
             },
 
             removeFromOrder(index) {
@@ -1365,6 +1542,18 @@
                     if (cashReceived < this.currentPaymentTotal) {
                         return; // Button should be disabled anyway
                     }
+                }
+
+                // Deduct stock if enabled
+                if (this.stockEnabled) {
+                    this.currentOrder.forEach(orderItem => {
+                        const menuItem = this.menuItems.find(i => i.id === orderItem.id);
+                        if (menuItem) {
+                            const quantity = orderItem.quantity || 1;
+                            menuItem.stock -= quantity;
+                        }
+                    });
+                    this.renderMenu(); // Refresh menu to show updated stock
                 }
 
                 // Expand items with quantities into separate items for kitchen
@@ -1629,12 +1818,34 @@
                 document.getElementById('preorderSelectedItems').innerHTML = '<div class="empty-state" style="padding: 20px;">No items selected</div>';
                 
                 const grid = document.getElementById('preorderMenuGrid');
-                grid.innerHTML = this.menuItems.map(item => `
-                    <div class="menu-item" onclick="app.addToPreorder(${item.id})">
-                        <h3>${item.name}</h3>
-                        <div class="price">RM ${item.price.toFixed(2)}</div>
-                    </div>
-                `).join('');
+                grid.innerHTML = this.menuItems.map(item => {
+                    const isOutOfStock = this.stockEnabled && item.stock <= 0;
+                    const isLowStock = this.stockEnabled && item.stock > 0 && item.stock <= 5;
+                    
+                    let stockBadge = '';
+                    if (this.stockEnabled) {
+                        if (isOutOfStock) {
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">OUT</div>';
+                        } else if (isLowStock) {
+                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 4px 8px; font-size: 9px; font-weight: 600; letter-spacing: 1px; z-index: 10;">${item.stock}</div>`;
+                        }
+                    }
+                    
+                    const imageContent = item.image 
+                        ? `<img src="${item.image}" alt="${item.name}">` 
+                        : '🍽️';
+                    
+                    return `
+                        <div class="menu-item ${isOutOfStock ? 'disabled' : ''}" onclick="${isOutOfStock ? '' : `app.addToPreorder(${item.id})`}" style="${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                            ${stockBadge}
+                            <div class="menu-item-image">${imageContent}</div>
+                            <div class="menu-item-content">
+                                <h3>${item.name}</h3>
+                                <div class="price">RM ${item.price.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 
                 document.getElementById('preorderModal').classList.add('active');
                 this.playSound('click');
@@ -1647,28 +1858,42 @@
 
             addToPreorder(itemId) {
                 const item = this.menuItems.find(i => i.id === itemId);
-                if (item) {
-                    // Check if item already exists in preorder
-                    const existingItem = this.preorderItems.find(orderItem => orderItem.id === itemId);
-                    
-                    if (existingItem) {
-                        // Increment quantity if item exists
-                        existingItem.quantity = (existingItem.quantity || 1) + 1;
-                    } else {
-                        // Add new item with quantity 1
-                        this.preorderItems.push({...item, quantity: 1});
-                    }
-                    
-                    const total = this.preorderItems.reduce((sum, item) => {
-                        const quantity = item.quantity || 1;
-                        return sum + (item.price * quantity);
-                    }, 0);
-                    document.getElementById('preorderTotal').textContent = total.toFixed(2);
-                    
-                    // Update selected items display
-                    this.updatePreorderItemsList();
-                    this.playSound('order');
+                if (!item) return;
+                
+                // Check stock availability
+                if (this.stockEnabled && item.stock <= 0) {
+                    alert(`${item.name} is out of stock!`);
+                    return;
                 }
+                
+                // Check if item already exists in preorder
+                const existingItem = this.preorderItems.find(orderItem => orderItem.id === itemId);
+                
+                if (existingItem) {
+                    // Check if we have enough stock for one more
+                    if (this.stockEnabled) {
+                        const currentQuantity = existingItem.quantity || 1;
+                        if (item.stock < currentQuantity + 1) {
+                            alert(`Only ${item.stock} ${item.name} available in stock!`);
+                            return;
+                        }
+                    }
+                    // Increment quantity if item exists
+                    existingItem.quantity = (existingItem.quantity || 1) + 1;
+                } else {
+                    // Add new item with quantity 1
+                    this.preorderItems.push({...item, quantity: 1});
+                }
+                
+                const total = this.preorderItems.reduce((sum, item) => {
+                    const quantity = item.quantity || 1;
+                    return sum + (item.price * quantity);
+                }, 0);
+                document.getElementById('preorderTotal').textContent = total.toFixed(2);
+                
+                // Update selected items display
+                this.updatePreorderItemsList();
+                this.playSound('order');
             },
 
             updatePreorderItemsList() {
@@ -2150,6 +2375,77 @@
             closeShiftHistory() {
                 document.getElementById('shiftHistoryModal').classList.remove('active');
                 this.playSound('click');
+            },
+
+            openStockManager() {
+                const toggle = document.getElementById('stockToggle');
+                toggle.checked = this.stockEnabled;
+                
+                this.renderStockList();
+                document.getElementById('stockManagerModal').classList.add('active');
+                this.playSound('click');
+            },
+
+            closeStockManager() {
+                document.getElementById('stockManagerModal').classList.remove('active');
+                this.playSound('click');
+            },
+
+            toggleStock() {
+                this.stockEnabled = document.getElementById('stockToggle').checked;
+                this.renderMenu(); // Refresh menu
+                this.playSound('click');
+            },
+
+            renderStockList() {
+                const listDiv = document.getElementById('stockItemsList');
+                
+                listDiv.innerHTML = this.menuItems.map(item => {
+                    let badge = '';
+                    if (item.stock <= 0) {
+                        badge = '<span class="stock-badge out">Out of Stock</span>';
+                    } else if (item.stock <= 5) {
+                        badge = '<span class="stock-badge low">Low Stock</span>';
+                    } else {
+                        badge = '<span class="stock-badge ok">In Stock</span>';
+                    }
+                    
+                    return `
+                        <div class="stock-item-row">
+                            <div class="stock-item-info" style="flex: 2;">
+                                <div class="stock-item-name">${item.name}</div>
+                                <div class="stock-item-price">RM ${item.price.toFixed(2)}</div>
+                                <input type="text" class="stock-input" placeholder="Image URL (optional)" value="${item.image || ''}" data-item-id="${item.id}" data-field="image" style="width: 100%; margin-top: 8px; text-align: left; font-size: 11px; padding: 6px;">
+                            </div>
+                            <div class="stock-input-group">
+                                ${badge}
+                                <input type="number" class="stock-input" value="${item.stock}" min="0" data-item-id="${item.id}" data-field="stock">
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            saveStock() {
+                const inputs = document.querySelectorAll('.stock-input');
+                inputs.forEach(input => {
+                    const itemId = parseInt(input.dataset.itemId);
+                    const field = input.dataset.field;
+                    const item = this.menuItems.find(i => i.id === itemId);
+                    
+                    if (item) {
+                        if (field === 'stock') {
+                            item.stock = parseInt(input.value) || 0;
+                        } else if (field === 'image') {
+                            item.image = input.value.trim();
+                        }
+                    }
+                });
+                
+                this.renderMenu(); // Refresh menu display
+                this.closeStockManager();
+                this.playSound('success');
+                alert('Stock and images updated successfully!');
             }
         };
 
