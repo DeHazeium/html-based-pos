@@ -1786,39 +1786,52 @@
             },
 
             async addNewItem() {
-                const name = prompt('Enter item name:');
-                
-                if (!name || name.trim() === '') {
-                    alert('Item name is required');
-                    return;
+                try {
+                    const name = prompt('Enter item name:');
+                    console.log('Name entered:', name);
+                    
+                    if (!name || name.trim() === '') {
+                        alert('Item name is required');
+                        return;
+                    }
+                    
+                    const priceInput = prompt('Enter item price (numbers only):');
+                    console.log('Price entered:', priceInput);
+                    
+                    if (!priceInput) {
+                        alert('Price is required');
+                        return;
+                    }
+                    
+                    const price = parseFloat(priceInput);
+                    console.log('Parsed price:', price);
+                    
+                    if (isNaN(price) || price <= 0) {
+                        alert('Please enter a valid price greater than 0');
+                        return;
+                    }
+                    
+                    const newItem = {
+                        id: Math.max(...this.menuItems.map(i => i.id), 0) + 1,
+                        name: name.trim(),
+                        price: price
+                    };
+                    
+                    console.log('Adding new item:', newItem);
+                    this.menuItems.push(newItem);
+                    console.log('Menu items after push:', this.menuItems);
+                    
+                    await this.saveMenu();
+                    console.log('Menu saved');
+                    
+                    this.renderMenu();
+                    this.renderMenuEditor();
+                    this.playSound('success');
+                    alert(`Item "${name}" added successfully!`);
+                } catch (error) {
+                    console.error('Error adding new item:', error);
+                    alert('Error adding item: ' + error.message);
                 }
-                
-                const priceInput = prompt('Enter item price (numbers only):');
-                
-                if (!priceInput) {
-                    alert('Price is required');
-                    return;
-                }
-                
-                const price = parseFloat(priceInput);
-                
-                if (isNaN(price) || price <= 0) {
-                    alert('Please enter a valid price greater than 0');
-                    return;
-                }
-                
-                const newItem = {
-                    id: Math.max(...this.menuItems.map(i => i.id), 0) + 1,
-                    name: name.trim(),
-                    price: price
-                };
-                
-                this.menuItems.push(newItem);
-                await this.saveMenu();
-                this.renderMenu();
-                this.renderMenuEditor();
-                this.playSound('success');
-                alert(`Item "${name}" added successfully!`);
             }
         };
 
