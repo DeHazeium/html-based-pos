@@ -1038,30 +1038,18 @@
             </div>
             
             <div class="form-group">
-                <label>Pickup Time</label>
-                <input type="datetime-local" id="preorderTime">
-            </div>
-
-            <div class="form-group">
-                <label>Payment Method</label>
-                <select id="preorderPaymentMethod" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 14px; font-family: 'Montserrat', sans-serif;">
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                    <option value="ewallet">E-Wallet</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Special Instructions (Optional)</label>
-                <textarea id="preorderNotes" placeholder="Any special requests or notes..."></textarea>
-            </div>
-            
-            <div class="form-group">
                 <label>Select Items</label>
                 <div class="menu-grid" id="preorderMenuGrid"></div>
             </div>
+
+            <div class="form-group">
+                <label>Selected Items</label>
+                <div id="preorderSelectedItems" style="background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; min-height: 100px; max-height: 200px; overflow-y: auto;">
+                    <div class="empty-state" style="padding: 20px;">No items selected</div>
+                </div>
+            </div>
             
-            <div style="background: var(--bg-tertiary); padding: 20px; margin: 20px 0; text-align: center;">
+            <div style="background: var(--bg-tertiary); padding: 20px; margin: 20px 0; text-align: center; border: 1px solid var(--accent);">
                 <div style="font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px;">
                     TOTAL: RM <span id="preorderTotal">0.00</span>
                 </div>
@@ -1637,9 +1625,8 @@
             openPreorderModal() {
                 this.preorderItems = [];
                 document.getElementById('preorderCustomer').value = '';
-                document.getElementById('preorderTime').value = '';
-                document.getElementById('preorderNotes').value = '';
                 document.getElementById('preorderTotal').textContent = '0.00';
+                document.getElementById('preorderSelectedItems').innerHTML = '<div class="empty-state" style="padding: 20px;">No items selected</div>';
                 
                 const grid = document.getElementById('preorderMenuGrid');
                 grid.innerHTML = this.menuItems.map(item => `
@@ -1664,39 +1651,63 @@
                     this.preorderItems.push({...item});
                     const total = this.preorderItems.reduce((sum, item) => sum + item.price, 0);
                     document.getElementById('preorderTotal').textContent = total.toFixed(2);
+                    
+                    // Update selected items display
+                    this.updatePreorderItemsList();
                     this.playSound('order');
                 }
             },
 
+            updatePreorderItemsList() {
+                const selectedDiv = document.getElementById('preorderSelectedItems');
+                
+                if (this.preorderItems.length === 0) {
+                    selectedDiv.innerHTML = '<div class="empty-state" style="padding: 20px;">No items selected</div>';
+                    return;
+                }
+
+                selectedDiv.innerHTML = this.preorderItems.map((item, index) => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 500;">${item.name}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">RM ${item.price.toFixed(2)}</div>
+                        </div>
+                        <button onclick="app.removeFromPreorder(${index})" style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 5px 10px; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s;">Remove</button>
+                    </div>
+                `).join('');
+            },
+
+            removeFromPreorder(index) {
+                this.preorderItems.splice(index, 1);
+                const total = this.preorderItems.reduce((sum, item) => sum + item.price, 0);
+                document.getElementById('preorderTotal').textContent = total.toFixed(2);
+                this.updatePreorderItemsList();
+                this.playSound('click');
+            },
+
             async createPreorder() {
                 const customer = document.getElementById('preorderCustomer').value.trim();
-                const time = document.getElementById('preorderTime').value;
-                const notes = document.getElementById('preorderNotes').value.trim();
-                const paymentMethod = document.getElementById('preorderPaymentMethod').value;
 
-                if (!customer || !time || this.preorderItems.length === 0) {
-                    alert('Please fill in customer name, pickup time, and add items');
+                if (!customer || this.preorderItems.length === 0) {
+                    alert('Please fill in customer name and add items');
                     return;
                 }
 
                 const preorder = {
                     id: Date.now(),
                     customerName: customer,
-                    pickupTime: time,
-                    notes: notes,
-                    paymentMethod: paymentMethod,
                     items: [...this.preorderItems],
                     total: this.preorderItems.reduce((sum, item) => sum + item.price, 0),
                     createdAt: new Date().toISOString(),
-                    displayTime: new Date(time).toLocaleString('en-MY', { 
+                    displayTime: new Date().toLocaleString('en-MY', { 
                         day: '2-digit',
                         month: 'short',
-                        year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
                     }),
                     status: 'pending',
+                    paymentStatus: 'unpaid',
                     type: 'preorder'
                 };
 
@@ -1722,24 +1733,63 @@
                     return;
                 }
                 
-                listDiv.innerHTML = pending.map(preorder => `
-                    <div class="kitchen-order preorder">
-                        <div class="order-badge preorder">Preorder</div>
-                        <h3>${preorder.customerName}</h3>
-                        <div class="order-time">Pickup: ${preorder.displayTime}</div>
-                        <div class="order-time">Payment: ${(preorder.paymentMethod || 'Not specified').toUpperCase()}</div>
-                        ${preorder.notes ? `<div class="order-notes">${preorder.notes}</div>` : ''}
-                        <ul>
-                            ${preorder.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
-                        </ul>
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${preorder.total.toFixed(2)}</div>
-                        <button class="action-btn" style="margin-top: 15px;" onclick="app.activatePreorder(${preorder.id})">Send to Kitchen</button>
-                        <button class="action-btn" onclick="app.cancelPreorder(${preorder.id})">Cancel</button>
-                    </div>
-                `).join('');
+                listDiv.innerHTML = pending.map(preorder => {
+                    const isPaid = preorder.paymentStatus === 'paid';
+                    const paymentBadge = isPaid 
+                        ? '<div style="display: inline-block; background: var(--accent); color: var(--bg-primary); padding: 4px 12px; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-left: 10px;">PAID</div>'
+                        : '<div style="display: inline-block; background: var(--warning); color: var(--text-primary); padding: 4px 12px; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-left: 10px;">UNPAID</div>';
+                    
+                    return `
+                        <div class="kitchen-order preorder">
+                            <div class="order-badge preorder">Preorder</div>
+                            <h3>${preorder.customerName} ${paymentBadge}</h3>
+                            <div class="order-time">${preorder.displayTime}</div>
+                            <ul>
+                                ${preorder.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${preorder.total.toFixed(2)}</div>
+                            ${!isPaid ? `<button class="action-btn" style="margin-top: 15px; background: var(--accent); border-color: var(--accent); color: var(--bg-primary);" onclick="app.confirmPreorderPayment(${preorder.id})">Confirm Payment</button>` : ''}
+                            <button class="action-btn" style="${!isPaid ? 'opacity: 0.5;' : ''}" onclick="app.sendToKitchen(${preorder.id})" ${!isPaid ? 'disabled' : ''}>Send to Kitchen</button>
+                            <button class="action-btn" onclick="app.cancelPreorder(${preorder.id})">Cancel</button>
+                        </div>
+                    `;
+                }).join('');
             },
 
-            async activatePreorder(preorderId) {
+            async confirmPreorderPayment(preorderId) {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'preorders'));
+                    const preorders = snapshot.val();
+                    
+                    if (preorders) {
+                        for (let key in preorders) {
+                            if (preorders[key].id === preorderId) {
+                                // Show payment method selection
+                                const paymentMethod = prompt('Select payment method:\n1 = Cash\n2 = Card\n3 = E-Wallet\n\nEnter 1, 2, or 3:');
+                                
+                                let method = 'cash';
+                                if (paymentMethod === '2') method = 'card';
+                                else if (paymentMethod === '3') method = 'ewallet';
+                                else if (paymentMethod !== '1') {
+                                    alert('Invalid selection');
+                                    return;
+                                }
+                                
+                                await window.dbSet(window.dbRef(window.db, `preorders/${key}/paymentStatus`), 'paid');
+                                await window.dbSet(window.dbRef(window.db, `preorders/${key}/paymentMethod`), method);
+                                
+                                this.playSound('success');
+                                alert('Payment confirmed!');
+                                break;
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error confirming payment:', error);
+                }
+            },
+
+            async sendToKitchen(preorderId) {
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'preorders'));
                     const preorders = snapshot.val();
@@ -1749,11 +1799,15 @@
                             if (preorders[key].id === preorderId) {
                                 const preorder = preorders[key];
                                 
-                                await window.dbSet(window.dbRef(window.db, `preorders/${key}/status`), 'activated');
+                                if (preorder.paymentStatus !== 'paid') {
+                                    alert('Please confirm payment first');
+                                    return;
+                                }
+                                
+                                await window.dbSet(window.dbRef(window.db, `preorders/${key}/status`), 'in-kitchen');
                                 
                                 const kitchenOrder = {
                                     ...preorder,
-                                    paymentMethod: preorder.paymentMethod || 'preorder',
                                     timestamp: new Date().toISOString(),
                                     status: 'pending'
                                 };
@@ -1761,12 +1815,13 @@
                                 await this.addOrderToKitchen(kitchenOrder);
                                 await this.updateShiftStats(kitchenOrder);
                                 this.playSound('success');
+                                alert('Order sent to kitchen!');
                                 break;
                             }
                         }
                     }
                 } catch (error) {
-                    console.error('Error activating preorder:', error);
+                    console.error('Error sending to kitchen:', error);
                 }
             },
 
@@ -1830,7 +1885,7 @@
 
             async openShiftReport() {
                 try {
-                    const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
+                    const snapshot = await window.dbGet(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
                         alert('No shift data available');
                         return;
@@ -1854,6 +1909,11 @@
                         itemsHtml = '<div class="empty-state">No items sold yet</div>';
                     }
 
+                    // Calculate total from all payment methods
+                    const totalCash = shift.paymentMethods?.cash || 0;
+                    const totalCard = shift.paymentMethods?.card || 0;
+                    const totalEwallet = shift.paymentMethods?.ewallet || 0;
+
                     reportContent.innerHTML = `
                         <div class="report-grid">
                             <div class="report-stat">
@@ -1866,19 +1926,15 @@
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Cash</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods?.cash || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${totalCash.toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Card</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods?.card || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${totalCard.toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">E-Wallet</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods?.ewallet || 0).toFixed(2)}</div>
-                            </div>
-                            <div class="report-stat">
-                                <div class="stat-label">Preorder</div>
-                                <div class="stat-value">RM ${(shift.paymentMethods?.preorder || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${totalEwallet.toFixed(2)}</div>
                             </div>
                         </div>
                         <div class="items-sold-list">
