@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POS System</title>
+    <title>Cloud POS System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,8 @@
             --text-primary: #ffffff;
             --text-secondary: #888888;
             --border: #2a2a2a;
+            --accent: #00ff88;
+            --warning: #ff6b6b;
         }
 
         body {
@@ -90,7 +92,7 @@
         }
 
         .pin-display.error {
-            border-color: #ffffff;
+            border-color: var(--warning);
             animation: shake 0.3s ease;
         }
 
@@ -139,6 +141,8 @@
             padding: 20px;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
@@ -146,6 +150,29 @@
             font-size: 24px;
             color: var(--text-primary);
             letter-spacing: 4px;
+        }
+
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         .mode-selector {
@@ -214,7 +241,7 @@
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 20px;
         }
@@ -436,6 +463,8 @@
             border: 1px solid var(--border);
             max-width: 500px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-content h3 {
@@ -486,7 +515,7 @@
             letter-spacing: 2px;
         }
 
-        input {
+        input, textarea {
             width: 100%;
             padding: 15px;
             margin: 15px 0;
@@ -497,55 +526,93 @@
             font-family: 'Montserrat', sans-serif;
         }
 
-        input:focus {
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input:focus, textarea:focus {
             outline: none;
             border-color: var(--text-primary);
         }
 
         .kitchen-orders {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
         }
 
         .kitchen-order {
             background: var(--bg-secondary);
-            padding: 25px;
+            padding: 30px;
             border: 1px solid var(--border);
-            border-left: 3px solid var(--text-primary);
+            border-left: 4px solid var(--accent);
+            position: relative;
+        }
+
+        .kitchen-order.preorder {
+            border-left-color: #ffd93d;
         }
 
         .kitchen-order.completed {
-            opacity: 0.5;
+            opacity: 0.4;
             border-left-color: var(--text-secondary);
+        }
+
+        .order-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .order-badge.preorder {
+            background: #ffd93d;
         }
 
         .kitchen-order h3 {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 20px;
+            font-size: 28px;
             color: var(--text-primary);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             letter-spacing: 2px;
         }
 
         .kitchen-order ul {
             list-style: none;
-            margin: 20px 0;
+            margin: 25px 0;
         }
 
         .kitchen-order li {
-            padding: 8px 0;
-            color: var(--text-secondary);
+            padding: 12px 0;
+            color: var(--text-primary);
             border-bottom: 1px solid var(--border);
-            font-size: 12px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .order-time {
             color: var(--text-secondary);
             font-size: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        .order-notes {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 3px solid var(--accent);
+            font-size: 12px;
+            color: var(--text-secondary);
         }
 
         .manage-section {
@@ -572,6 +639,55 @@
             font-size: 12px;
         }
 
+        .report-section {
+            background: var(--bg-tertiary);
+            padding: 25px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .report-item {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .report-item h4 {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .report-item .value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            color: var(--text-primary);
+            letter-spacing: 1px;
+        }
+
+        .item-breakdown {
+            margin-top: 20px;
+        }
+
+        .item-breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
@@ -595,13 +711,21 @@
             .order-panel {
                 position: static;
             }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .kitchen-orders {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
-            <div class="login-title">POS SYSTEM</div>
+            <div class="login-title">CLOUD POS</div>
             <div class="login-subtitle">Enter PIN</div>
             <div id="pinDisplay" class="pin-display"></div>
             <div class="numpad">
@@ -623,10 +747,17 @@
 
     <div class="container" id="mainApp" style="display: none;">
         <div class="header">
-            <div class="logo">POS SYSTEM</div>
+            <div>
+                <div class="logo">CLOUD POS</div>
+                <div class="sync-indicator">
+                    <div class="sync-dot"></div>
+                    <span>Synced</span>
+                </div>
+            </div>
             <div class="mode-selector">
                 <button class="mode-btn active" onclick="app.switchMode('cashier', event)">Cashier</button>
                 <button class="mode-btn" onclick="app.switchMode('kitchen', event)">Kitchen</button>
+                <button class="mode-btn" onclick="app.switchMode('preorder', event)">Preorder</button>
                 <button class="mode-btn" onclick="app.switchMode('history', event)">History</button>
             </div>
             <button class="logout-btn" onclick="app.logout()">Logout</button>
@@ -635,12 +766,20 @@
         <div id="cashier" class="panel active">
             <div class="stats">
                 <div class="stat-card">
-                    <h3>Orders</h3>
+                    <h3>Orders Today</h3>
                     <div class="value" id="shiftOrders">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Sales</h3>
+                    <h3>Total Sales</h3>
                     <div class="value" id="shiftSales">RM 0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>QR Payments</h3>
+                    <div class="value" id="qrCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Cash Payments</h3>
+                    <div class="value" id="cashCount">0</div>
                 </div>
             </div>
 
@@ -652,30 +791,39 @@
                     </div>
 
                     <div class="manage-section">
-                        <div class="section-title">Manage</div>
+                        <div class="section-title">Manage Menu</div>
                         <div id="menuEditor"></div>
                         <button class="action-btn" onclick="app.addNewItem()">Add Item</button>
                     </div>
                 </div>
 
                 <div class="order-panel">
-                    <div class="section-title">Order</div>
+                    <div class="section-title">Current Order</div>
                     <div class="order-items" id="currentOrder"></div>
                     <div class="total-section">
                         <div class="total-label">Total</div>
-                        <div class="total-amount">RM <span id="orderTotal">0</span></div>
+                        <div class="total-amount">RM <span id="orderTotal">0.00</span></div>
                     </div>
-                    <button class="action-btn btn-primary" onclick="app.openPaymentModal()">Payment</button>
-                    <button class="action-btn" onclick="app.clearOrder()">Clear</button>
-                    <button class="action-btn" onclick="app.closeShift()">Close Shift</button>
+                    <button class="action-btn btn-primary" onclick="app.openPaymentModal()">Process Payment</button>
+                    <button class="action-btn" onclick="app.clearOrder()">Clear Order</button>
+                    <button class="action-btn" onclick="app.openShiftReport()">Today's Report</button>
+                    <button class="action-btn" onclick="app.closeShift()">Close Shift & Export</button>
                 </div>
             </div>
         </div>
 
         <div id="kitchen" class="panel">
             <div class="menu-section">
-                <div class="section-title">Orders</div>
+                <div class="section-title">Active Orders</div>
                 <div class="kitchen-orders" id="kitchenOrders"></div>
+            </div>
+        </div>
+
+        <div id="preorder" class="panel">
+            <div class="menu-section">
+                <div class="section-title">Preorders</div>
+                <button class="action-btn" style="max-width: 300px; margin-bottom: 20px;" onclick="app.openPreorderModal()">Create Preorder</button>
+                <div class="kitchen-orders" id="preorderList"></div>
             </div>
         </div>
 
@@ -689,15 +837,15 @@
 
     <div id="paymentModal" class="modal">
         <div class="modal-content">
-            <h3>Payment</h3>
+            <h3>Process Payment</h3>
             <div class="total-section">
                 <div class="total-label">Total</div>
-                <div class="total-amount">RM <span id="paymentTotal">0</span></div>
+                <div class="total-amount">RM <span id="paymentTotal">0.00</span></div>
             </div>
             
             <div class="payment-methods">
                 <div class="payment-method" onclick="app.selectPaymentMethod('qr', event)">
-                    <h4>QR</h4>
+                    <h4>QR Payment</h4>
                 </div>
                 <div class="payment-method" onclick="app.selectPaymentMethod('cash', event)">
                     <h4>Cash</h4>
@@ -708,12 +856,41 @@
                 <input type="number" id="amountReceived" placeholder="Amount Received" oninput="app.calculateChange()">
                 <div class="total-section">
                     <div class="total-label">Change</div>
-                    <div class="total-amount">RM <span id="changeAmount">0</span></div>
+                    <div class="total-amount">RM <span id="changeAmount">0.00</span></div>
                 </div>
             </div>
 
-            <button class="action-btn btn-primary" onclick="app.completePayment()">Complete</button>
+            <button class="action-btn btn-primary" onclick="app.completePayment()">Complete Payment</button>
             <button class="action-btn" onclick="app.closePaymentModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="preorderModal" class="modal">
+        <div class="modal-content">
+            <h3>Create Preorder</h3>
+            
+            <input type="text" id="preorderCustomer" placeholder="Customer Name">
+            <input type="datetime-local" id="preorderTime">
+            <textarea id="preorderNotes" placeholder="Special instructions or notes..."></textarea>
+            
+            <div class="section-title" style="margin-top: 20px;">Select Items</div>
+            <div class="menu-grid" id="preorderMenuGrid"></div>
+
+            <div class="total-section" style="margin-top: 20px;">
+                <div class="total-label">Preorder Total</div>
+                <div class="total-amount">RM <span id="preorderTotal">0.00</span></div>
+            </div>
+
+            <button class="action-btn btn-primary" onclick="app.createPreorder()">Create Preorder</button>
+            <button class="action-btn" onclick="app.closePreorderModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="shiftReportModal" class="modal">
+        <div class="modal-content">
+            <h3>Today's Shift Report</h3>
+            <div id="shiftReportContent"></div>
+            <button class="action-btn" onclick="app.closeShiftReport()">Close</button>
         </div>
     </div>
 
@@ -723,30 +900,25 @@
             enteredPin: '',
             isLoggedIn: false,
             
-            menuItems: [],
             currentOrder: [],
-            kitchenOrders: [],
-            completedOrders: [],
-            currentShift: { orders: [], sales: 0, startTime: null },
-            allShifts: [],
+            preorderItems: [],
             selectedPaymentMethod: null,
+            syncInterval: null,
 
-            init() {
-                this.loadData();
+            async init() {
+                await this.loadMenu();
+                await this.initShift();
                 this.renderMenu();
                 this.renderMenuEditor();
-                this.updateStats();
-                if (!this.currentShift.startTime) {
-                    this.currentShift.startTime = new Date().toISOString();
-                    this.saveData();
-                }
+                await this.updateStats();
+                this.startAutoSync();
             },
 
-            loadData() {
+            async loadMenu() {
                 try {
-                    const menuData = localStorage.getItem('pos-menu');
-                    if (menuData) {
-                        this.menuItems = JSON.parse(menuData);
+                    const result = await window.storage.get('pos-menu', true);
+                    if (result && result.value) {
+                        this.menuItems = JSON.parse(result.value);
                     } else {
                         this.menuItems = [
                             { id: 1, name: 'Nasi Goreng Beef', price: 9.00 },
@@ -759,42 +931,85 @@
                             { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50 },
                             { id: 9, name: 'Milk', price: 2.00 }
                         ];
-                        this.saveData();
-                    }
-
-                    const shiftData = localStorage.getItem('pos-current-shift');
-                    if (shiftData) {
-                        this.currentShift = JSON.parse(shiftData);
-                    }
-
-                    const kitchenData = localStorage.getItem('pos-kitchen-orders');
-                    if (kitchenData) {
-                        this.kitchenOrders = JSON.parse(kitchenData);
-                    }
-
-                    const shiftsData = localStorage.getItem('pos-all-shifts');
-                    if (shiftsData) {
-                        this.allShifts = JSON.parse(shiftsData);
-                    }
-
-                    const completedData = localStorage.getItem('pos-completed-orders');
-                    if (completedData) {
-                        this.completedOrders = JSON.parse(completedData);
+                        await this.saveMenu();
                     }
                 } catch (error) {
-                    console.error('Error loading data:', error);
+                    console.error('Error loading menu:', error);
                 }
             },
 
-            saveData() {
+            async saveMenu() {
                 try {
-                    localStorage.setItem('pos-menu', JSON.stringify(this.menuItems));
-                    localStorage.setItem('pos-current-shift', JSON.stringify(this.currentShift));
-                    localStorage.setItem('pos-kitchen-orders', JSON.stringify(this.kitchenOrders));
-                    localStorage.setItem('pos-all-shifts', JSON.stringify(this.allShifts));
-                    localStorage.setItem('pos-completed-orders', JSON.stringify(this.completedOrders));
+                    await window.storage.set('pos-menu', JSON.stringify(this.menuItems), true);
                 } catch (error) {
-                    console.error('Error saving data:', error);
+                    console.error('Error saving menu:', error);
+                }
+            },
+
+            async initShift() {
+                const today = new Date().toDateString();
+                try {
+                    const result = await window.storage.get('pos-current-shift', true);
+                    if (result && result.value) {
+                        const shift = JSON.parse(result.value);
+                        const shiftDate = new Date(shift.date).toDateString();
+                        
+                        if (shiftDate === today) {
+                            this.currentShift = shift;
+                        } else {
+                            await this.createNewShift();
+                        }
+                    } else {
+                        await this.createNewShift();
+                    }
+                } catch (error) {
+                    await this.createNewShift();
+                }
+            },
+
+            async createNewShift() {
+                this.currentShift = {
+                    date: new Date().toISOString(),
+                    orders: [],
+                    totalSales: 0,
+                    qrPayments: 0,
+                    cashPayments: 0,
+                    qrAmount: 0,
+                    cashAmount: 0,
+                    itemsSold: {}
+                };
+                await window.storage.set('pos-current-shift', JSON.stringify(this.currentShift), true);
+            },
+
+            startAutoSync() {
+                this.syncInterval = setInterval(async () => {
+                    await this.syncKitchenOrders();
+                    await this.syncPreorders();
+                    await this.updateStats();
+                }, 3000);
+            },
+
+            async syncKitchenOrders() {
+                try {
+                    const result = await window.storage.get('pos-kitchen-orders', true);
+                    if (result && result.value) {
+                        const orders = JSON.parse(result.value);
+                        this.renderKitchenOrders(orders);
+                    }
+                } catch (error) {
+                    console.error('Error syncing kitchen orders:', error);
+                }
+            },
+
+            async syncPreorders() {
+                try {
+                    const result = await window.storage.get('pos-preorders', true);
+                    if (result && result.value) {
+                        const preorders = JSON.parse(result.value);
+                        this.renderPreorderList(preorders);
+                    }
+                } catch (error) {
+                    console.error('Error syncing preorders:', error);
                 }
             },
 
@@ -837,6 +1052,7 @@
             logout() {
                 this.isLoggedIn = false;
                 this.enteredPin = '';
+                if (this.syncInterval) clearInterval(this.syncInterval);
                 document.getElementById('loginScreen').classList.remove('hidden');
                 document.getElementById('mainApp').style.display = 'none';
                 this.updatePinDisplay();
@@ -877,7 +1093,9 @@
                 document.getElementById(mode).classList.add('active');
 
                 if (mode === 'kitchen') {
-                    this.renderKitchenOrders();
+                    this.syncKitchenOrders();
+                } else if (mode === 'preorder') {
+                    this.syncPreorders();
                 } else if (mode === 'history') {
                     this.renderHistory();
                 }
@@ -908,7 +1126,7 @@
             addToOrder(itemId) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
-                    this.currentOrder.push({...item});
+                    this.currentOrder.push({...item, orderItemId: Date.now()});
                     this.renderCurrentOrder();
                     this.playSound('order');
                 }
@@ -963,7 +1181,7 @@
                 document.getElementById('paymentModal').classList.remove('active');
                 document.getElementById('cashPayment').style.display = 'none';
                 document.getElementById('amountReceived').value = '';
-                document.getElementById('changeAmount').textContent = '0';
+                document.getElementById('changeAmount').textContent = '0.00';
                 this.selectedPaymentMethod = null;
                 document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
                 this.playSound('click');
@@ -986,10 +1204,10 @@
                 const total = this.currentOrder.reduce((sum, item) => sum + item.price, 0);
                 const received = parseFloat(document.getElementById('amountReceived').value) || 0;
                 const change = received - total;
-                document.getElementById('changeAmount').textContent = change >= 0 ? change.toFixed(2) : '0';
+                document.getElementById('changeAmount').textContent = change >= 0 ? change.toFixed(2) : '0.00';
             },
 
-            completePayment() {
+            async completePayment() {
                 if (!this.selectedPaymentMethod) {
                     alert('Select payment method');
                     return;
@@ -1010,145 +1228,564 @@
                     total: this.currentOrder.reduce((sum, item) => sum + item.price, 0),
                     paymentMethod: this.selectedPaymentMethod,
                     timestamp: new Date().toISOString(),
-                    displayTime: new Date().toLocaleString(),
-                    status: 'pending'
+                    displayTime: new Date().toLocaleString('en-MY', { 
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    status: 'pending',
+                    type: 'regular'
                 };
 
-                this.kitchenOrders.push(order);
-                this.completedOrders.push(order);
-                this.currentShift.orders.push(order);
-                this.currentShift.sales += order.total;
-
-                this.saveData();
+                await this.addOrderToKitchen(order);
+                await this.updateShiftStats(order);
 
                 this.currentOrder = [];
                 this.renderCurrentOrder();
                 this.closePaymentModal();
-                this.updateStats();
+                await this.updateStats();
                 this.playSound('success');
             },
 
-            updateStats() {
-                document.getElementById('shiftOrders').textContent = this.currentShift.orders.length;
-                document.getElementById('shiftSales').textContent = `RM ${this.currentShift.sales.toFixed(2)}`;
+            async addOrderToKitchen(order) {
+                try {
+                    let orders = [];
+                    const result = await window.storage.get('pos-kitchen-orders', true);
+                    if (result && result.value) {
+                        orders = JSON.parse(result.value);
+                    }
+                    orders.push(order);
+                    await window.storage.set('pos-kitchen-orders', JSON.stringify(orders), true);
+                } catch (error) {
+                    console.error('Error adding order to kitchen:', error);
+                }
             },
 
-            closeShift() {
-                if (this.currentShift.orders.length === 0) {
-                    alert('No orders in shift');
+            async updateShiftStats(order) {
+                try {
+                    const result = await window.storage.get('pos-current-shift', true);
+                    if (result && result.value) {
+                        const shift = JSON.parse(result.value);
+                        
+                        shift.orders.push(order);
+                        shift.totalSales += order.total;
+
+                        if (order.paymentMethod === 'qr') {
+                            shift.qrPayments++;
+                            shift.qrAmount += order.total;
+                        } else {
+                            shift.cashPayments++;
+                            shift.cashAmount += order.total;
+                        }
+
+                        order.items.forEach(item => {
+                            if (!shift.itemsSold[item.name]) {
+                                shift.itemsSold[item.name] = { count: 0, total: 0, price: item.price };
+                            }
+                            shift.itemsSold[item.name].count++;
+                            shift.itemsSold[item.name].total += item.price;
+                        });
+
+                        this.currentShift = shift;
+                        await window.storage.set('pos-current-shift', JSON.stringify(shift), true);
+                    }
+                } catch (error) {
+                    console.error('Error updating shift stats:', error);
+                }
+            },
+
+            async updateStats() {
+                try {
+                    const result = await window.storage.get('pos-current-shift', true);
+                    if (result && result.value) {
+                        const shift = JSON.parse(result.value);
+                        document.getElementById('shiftOrders').textContent = shift.orders.length;
+                        document.getElementById('shiftSales').textContent = `RM ${shift.totalSales.toFixed(2)}`;
+                        document.getElementById('qrCount').textContent = shift.qrPayments;
+                        document.getElementById('cashCount').textContent = shift.cashPayments;
+                    }
+                } catch (error) {
+                    console.error('Error updating stats:', error);
+                }
+            },
+
+            async renderKitchenOrders(orders = null) {
+                const ordersDiv = document.getElementById('kitchenOrders');
+                
+                try {
+                    if (!orders) {
+                        const result = await window.storage.get('pos-kitchen-orders', true);
+                        if (result && result.value) {
+                            orders = JSON.parse(result.value);
+                        } else {
+                            orders = [];
+                        }
+                    }
+
+                    const pendingOrders = orders.filter(o => o.status === 'pending');
+                    
+                    if (pendingOrders.length === 0) {
+                        ordersDiv.innerHTML = '<div class="empty-state">No pending orders</div>';
+                        return;
+                    }
+                    
+                    ordersDiv.innerHTML = pendingOrders.map(order => `
+                        <div class="kitchen-order ${order.type === 'preorder' ? 'preorder' : ''}">
+                            ${order.type === 'preorder' ? '<div class="order-badge preorder">Preorder</div>' : '<div class="order-badge">Live</div>'}
+                            <h3>Order #${order.id}</h3>
+                            <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
+                            ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
+                            ${order.notes ? `<div class="order-notes">${order.notes}</div>` : ''}
+                            <ul>
+                                ${order.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                            <button class="action-btn" style="margin-top: 15px;" onclick="app.completeKitchenOrder(${order.id})">Mark as Complete</button>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Error rendering kitchen orders:', error);
+                }
+            },
+
+            async completeKitchenOrder(orderId) {
+                try {
+                    const result = await window.storage.get('pos-kitchen-orders', true);
+                    if (result && result.value) {
+                        const orders = JSON.parse(result.value);
+                        const order = orders.find(o => o.id === orderId);
+                        if (order) {
+                            order.status = 'completed';
+                            order.completedAt = new Date().toISOString();
+                            await window.storage.set('pos-kitchen-orders', JSON.stringify(orders), true);
+                            await this.syncKitchenOrders();
+                            this.playSound('success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error completing kitchen order:', error);
+                }
+            },
+
+            openPreorderModal() {
+                this.preorderItems = [];
+                document.getElementById('preorderCustomer').value = '';
+                document.getElementById('preorderTime').value = '';
+                document.getElementById('preorderNotes').value = '';
+                document.getElementById('preorderTotal').textContent = '0.00';
+                
+                const grid = document.getElementById('preorderMenuGrid');
+                grid.innerHTML = this.menuItems.map(item => `
+                    <div class="menu-item" onclick="app.addToPreorder(${item.id})">
+                        <h3>${item.name}</h3>
+                        <div class="price">RM ${item.price.toFixed(2)}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('preorderModal').classList.add('active');
+                this.playSound('click');
+            },
+
+            closePreorderModal() {
+                document.getElementById('preorderModal').classList.remove('active');
+                this.playSound('click');
+            },
+
+            addToPreorder(itemId) {
+                const item = this.menuItems.find(i => i.id === itemId);
+                if (item) {
+                    this.preorderItems.push({...item});
+                    const total = this.preorderItems.reduce((sum, item) => sum + item.price, 0);
+                    document.getElementById('preorderTotal').textContent = total.toFixed(2);
+                    this.playSound('order');
+                }
+            },
+
+            async createPreorder() {
+                const customer = document.getElementById('preorderCustomer').value.trim();
+                const time = document.getElementById('preorderTime').value;
+                const notes = document.getElementById('preorderNotes').value.trim();
+
+                if (!customer || !time || this.preorderItems.length === 0) {
+                    alert('Please fill in customer name, pickup time, and add items');
                     return;
                 }
 
-                const shiftData = {
-                    ...this.currentShift,
-                    closedAt: new Date().toISOString(),
-                    displayClosedAt: new Date().toLocaleString()
+                const preorder = {
+                    id: Date.now(),
+                    customerName: customer,
+                    pickupTime: time,
+                    notes: notes,
+                    items: [...this.preorderItems],
+                    total: this.preorderItems.reduce((sum, item) => sum + item.price, 0),
+                    createdAt: new Date().toISOString(),
+                    displayTime: new Date(time).toLocaleString('en-MY', { 
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    }),
+                    status: 'pending',
+                    type: 'preorder'
                 };
 
-                this.allShifts.push(shiftData);
-                this.saveData();
-
-                const dataStr = JSON.stringify(shiftData, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `shift_${Date.now()}.json`;
-                link.click();
-
-                this.currentShift = { orders: [], sales: 0, startTime: new Date().toISOString() };
-                this.saveData();
-                this.updateStats();
-                this.playSound('success');
-            },
-
-            renderKitchenOrders() {
-                const ordersDiv = document.getElementById('kitchenOrders');
-                const pendingOrders = this.kitchenOrders.filter(o => o.status === 'pending');
-                
-                if (pendingOrders.length === 0) {
-                    ordersDiv.innerHTML = '<div class="empty-state">No pending orders</div>';
-                    return;
-                }
-                
-                ordersDiv.innerHTML = pendingOrders.map(order => `
-                    <div class="kitchen-order">
-                        <h3>Order #${order.id}</h3>
-                        <div class="order-time">${order.displayTime}</div>
-                        <ul>
-                            ${order.items.map(item => `<li>${item.name} - RM ${item.price.toFixed(2)}</li>`).join('')}
-                        </ul>
-                        <div style="margin-top: 15px; font-family: 'Bebas Neue', sans-serif; font-size: 20px;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                        <button class="action-btn" style="margin-top: 15px;" onclick="app.completeKitchenOrder(${order.id})">Done</button>
-                    </div>
-                `).join('');
-            },
-
-            completeKitchenOrder(orderId) {
-                const order = this.kitchenOrders.find(o => o.id === orderId);
-                if (order) {
-                    order.status = 'completed';
-                    order.completedAt = new Date().toISOString();
-                    this.saveData();
-                    this.renderKitchenOrders();
+                try {
+                    let preorders = [];
+                    const result = await window.storage.get('pos-preorders', true);
+                    if (result && result.value) {
+                        preorders = JSON.parse(result.value);
+                    }
+                    preorders.push(preorder);
+                    await window.storage.set('pos-preorders', JSON.stringify(preorders), true);
+                    
+                    this.closePreorderModal();
+                    await this.syncPreorders();
                     this.playSound('success');
+                } catch (error) {
+                    console.error('Error creating preorder:', error);
+                    alert('Error creating preorder');
                 }
             },
 
-            renderHistory() {
+            async renderPreorderList(preorders = null) {
+                const listDiv = document.getElementById('preorderList');
+                
+                try {
+                    if (!preorders) {
+                        const result = await window.storage.get('pos-preorders', true);
+                        if (result && result.value) {
+                            preorders = JSON.parse(result.value);
+                        } else {
+                            preorders = [];
+                        }
+                    }
+
+                    const pending = preorders.filter(p => p.status === 'pending');
+                    
+                    if (pending.length === 0) {
+                        listDiv.innerHTML = '<div class="empty-state">No preorders</div>';
+                        return;
+                    }
+                    
+                    listDiv.innerHTML = pending.map(preorder => `
+                        <div class="kitchen-order preorder">
+                            <div class="order-badge preorder">Preorder</div>
+                            <h3>${preorder.customerName}</h3>
+                            <div class="order-time">Pickup: ${preorder.displayTime}</div>
+                            ${preorder.notes ? `<div class="order-notes">${preorder.notes}</div>` : ''}
+                            <ul>
+                                ${preorder.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${preorder.total.toFixed(2)}</div>
+                            <button class="action-btn" style="margin-top: 15px;" onclick="app.activatePreorder(${preorder.id})">Send to Kitchen</button>
+                            <button class="action-btn" onclick="app.cancelPreorder(${preorder.id})">Cancel</button>
+                        </div>
+                    `).join('');
+                } catch (error) {
+                    console.error('Error rendering preorders:', error);
+                }
+            },
+
+            async activatePreorder(preorderId) {
+                try {
+                    const result = await window.storage.get('pos-preorders', true);
+                    if (result && result.value) {
+                        const preorders = JSON.parse(result.value);
+                        const preorder = preorders.find(p => p.id === preorderId);
+                        
+                        if (preorder) {
+                            preorder.status = 'activated';
+                            await window.storage.set('pos-preorders', JSON.stringify(preorders), true);
+                            
+                            const kitchenOrder = {
+                                ...preorder,
+                                paymentMethod: 'preorder',
+                                timestamp: new Date().toISOString(),
+                                status: 'pending'
+                            };
+                            
+                            await this.addOrderToKitchen(kitchenOrder);
+                            await this.updateShiftStats(kitchenOrder);
+                            await this.syncPreorders();
+                            await this.updateStats();
+                            this.playSound('success');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error activating preorder:', error);
+                }
+            },
+
+            async cancelPreorder(preorderId) {
+                if (!confirm('Cancel this preorder?')) return;
+                
+                try {
+                    const result = await window.storage.get('pos-preorders', true);
+                    if (result && result.value) {
+                        let preorders = JSON.parse(result.value);
+                        preorders = preorders.filter(p => p.id !== preorderId);
+                        await window.storage.set('pos-preorders', JSON.stringify(preorders), true);
+                        await this.syncPreorders();
+                        this.playSound('click');
+                    }
+                } catch (error) {
+                    console.error('Error canceling preorder:', error);
+                }
+            },
+
+            async renderHistory() {
                 const historyDiv = document.getElementById('orderHistory');
                 
-                if (this.completedOrders.length === 0) {
-                    historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
-                    return;
-                }
+                try {
+                    const result = await window.storage.get('pos-kitchen-orders', true);
+                    if (!result || !result.value) {
+                        historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
+                        return;
+                    }
 
-                const sortedOrders = [...this.completedOrders].reverse();
-                
-                historyDiv.innerHTML = sortedOrders.map(order => `
-                    <div class="kitchen-order ${order.status === 'completed' ? 'completed' : ''}">
-                        <h3>Order #${order.id}</h3>
-                        <div class="order-time">${order.displayTime} - ${order.paymentMethod.toUpperCase()}</div>
-                        <ul>
-                            ${order.items.map(item => `<li>${item.name} - RM ${item.price.toFixed(2)}</li>`).join('')}
-                        </ul>
-                        <div style="margin-top: 15px; font-family: 'Bebas Neue', sans-serif; font-size: 20px;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                        <div style="margin-top: 10px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px;">
-                            ${order.status === 'completed' ? 'COMPLETED' : 'PENDING'}
+                    const orders = JSON.parse(result.value);
+                    const sortedOrders = [...orders].reverse();
+                    
+                    if (sortedOrders.length === 0) {
+                        historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
+                        return;
+                    }
+
+                    historyDiv.innerHTML = sortedOrders.map(order => `
+                        <div class="kitchen-order ${order.status === 'completed' ? 'completed' : ''}">
+                            <h3>Order #${order.id}</h3>
+                            <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
+                            ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
+                            <ul>
+                                ${order.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                            <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                ${order.status === 'completed' ? '✓ Completed' : 'Pending'}
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                } catch (error) {
+                    console.error('Error rendering history:', error);
+                }
             },
 
-            updateItemName(itemId, newName) {
+            async openShiftReport() {
+                try {
+                    const result = await window.storage.get('pos-current-shift', true);
+                    if (!result || !result.value) {
+                        alert('No shift data available');
+                        return;
+                    }
+
+                    const shift = JSON.parse(result.value);
+                    const reportContent = document.getElementById('shiftReportContent');
+
+                    const itemsHtml = Object.entries(shift.itemsSold)
+                        .sort((a, b) => b[1].count - a[1].count)
+                        .map(([name, data]) => `
+                            <div class="item-breakdown-row">
+                                <span>${name}</span>
+                                <span>${data.count}x @ RM ${data.price.toFixed(2)}</span>
+                                <span>RM ${data.total.toFixed(2)}</span>
+                            </div>
+                        `).join('');
+
+                    reportContent.innerHTML = `
+                        <div class="report-section">
+                            <h4 style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; margin-bottom: 20px; letter-spacing: 2px;">
+                                ${new Date(shift.date).toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                            </h4>
+                            
+                            <div class="report-grid">
+                                <div class="report-item">
+                                    <h4>Total Orders</h4>
+                                    <div class="value">${shift.orders.length}</div>
+                                </div>
+                                <div class="report-item">
+                                    <h4>Total Sales</h4>
+                                    <div class="value">RM ${shift.totalSales.toFixed(2)}</div>
+                                </div>
+                                <div class="report-item">
+                                    <h4>QR Payments</h4>
+                                    <div class="value">${shift.qrPayments}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">RM ${shift.qrAmount.toFixed(2)}</div>
+                                </div>
+                                <div class="report-item">
+                                    <h4>Cash Payments</h4>
+                                    <div class="value">${shift.cashPayments}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">RM ${shift.cashAmount.toFixed(2)}</div>
+                                </div>
+                            </div>
+
+                            <div class="item-breakdown">
+                                <h4 style="font-size: 10px; color: var(--text-secondary); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;">Items Sold</h4>
+                                ${itemsHtml}
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('shiftReportModal').classList.add('active');
+                    this.playSound('click');
+                } catch (error) {
+                    console.error('Error opening shift report:', error);
+                    alert('Error loading shift report');
+                }
+            },
+
+            closeShiftReport() {
+                document.getElementById('shiftReportModal').classList.remove('active');
+                this.playSound('click');
+            },
+
+            async closeShift() {
+                if (!confirm('Close shift and export report? This will clear today\'s data and start a new shift.')) return;
+                
+                try {
+                    const result = await window.storage.get('pos-current-shift', true);
+                    if (!result || !result.value) {
+                        alert('No shift data to export');
+                        return;
+                    }
+
+                    const shift = JSON.parse(result.value);
+                    
+                    if (shift.orders.length === 0) {
+                        alert('No orders in shift');
+                        return;
+                    }
+
+                    const reportData = {
+                        shiftDate: new Date(shift.date).toLocaleDateString('en-MY'),
+                        shiftDateTime: new Date(shift.date).toLocaleString('en-MY'),
+                        closedAt: new Date().toLocaleString('en-MY'),
+                        summary: {
+                            totalOrders: shift.orders.length,
+                            totalSales: `RM ${shift.totalSales.toFixed(2)}`,
+                            qrPayments: shift.qrPayments,
+                            qrAmount: `RM ${shift.qrAmount.toFixed(2)}`,
+                            cashPayments: shift.cashPayments,
+                            cashAmount: `RM ${shift.cashAmount.toFixed(2)}`
+                        },
+                        itemsSold: Object.entries(shift.itemsSold).map(([name, data]) => ({
+                            item: name,
+                            quantity: data.count,
+                            unitPrice: `RM ${data.price.toFixed(2)}`,
+                            total: `RM ${data.total.toFixed(2)}`
+                        })),
+                        orders: shift.orders.map(order => ({
+                            orderId: order.id,
+                            time: order.displayTime,
+                            items: order.items.map(item => `${item.name} - RM ${item.price.toFixed(2)}`),
+                            total: `RM ${order.total.toFixed(2)}`,
+                            paymentMethod: order.paymentMethod,
+                            status: order.status
+                        }))
+                    };
+
+                    const readable = this.generateReadableReport(reportData);
+                    const blob = new Blob([readable], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `shift_report_${Date.now()}.txt`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+
+                    await this.createNewShift();
+                    await this.updateStats();
+                    this.playSound('success');
+                    alert('Shift closed and report exported successfully!');
+                } catch (error) {
+                    console.error('Error closing shift:', error);
+                    alert('Error closing shift');
+                }
+            },
+
+            generateReadableReport(data) {
+                let report = '';
+                report += '═══════════════════════════════════════════════════\n';
+                report += '                 SHIFT REPORT                      \n';
+                report += '═══════════════════════════════════════════════════\n\n';
+                report += `Shift Date: ${data.shiftDate}\n`;
+                report += `Opened: ${data.shiftDateTime}\n`;
+                report += `Closed: ${data.closedAt}\n\n`;
+                
+                report += '───────────────────────────────────────────────────\n';
+                report += '                    SUMMARY                        \n';
+                report += '───────────────────────────────────────────────────\n\n';
+                report += `Total Orders:     ${data.summary.totalOrders}\n`;
+                report += `Total Sales:      ${data.summary.totalSales}\n\n`;
+                report += `QR Payments:      ${data.summary.qrPayments} (${data.summary.qrAmount})\n`;
+                report += `Cash Payments:    ${data.summary.cashPayments} (${data.summary.cashAmount})\n\n`;
+                
+                report += '───────────────────────────────────────────────────\n';
+                report += '                  ITEMS SOLD                       \n';
+                report += '───────────────────────────────────────────────────\n\n';
+                
+                data.itemsSold.forEach(item => {
+                    report += `${item.item}\n`;
+                    report += `  Quantity: ${item.quantity}  |  Unit: ${item.unitPrice}  |  Total: ${item.total}\n\n`;
+                });
+                
+                report += '───────────────────────────────────────────────────\n';
+                report += '              ORDER TRANSACTIONS                   \n';
+                report += '───────────────────────────────────────────────────\n\n';
+                
+                data.orders.forEach((order, index) => {
+                    report += `Order #${order.orderId}\n`;
+                    report += `Time: ${order.time}\n`;
+                    report += `Payment: ${order.paymentMethod.toUpperCase()}\n`;
+                    report += `Items:\n`;
+                    order.items.forEach(item => {
+                        report += `  - ${item}\n`;
+                    });
+                    report += `Total: ${order.total}\n`;
+                    report += `Status: ${order.status.toUpperCase()}\n`;
+                    if (index < data.orders.length - 1) report += '\n';
+                });
+                
+                report += '\n═══════════════════════════════════════════════════\n';
+                report += '              END OF SHIFT REPORT                  \n';
+                report += '═══════════════════════════════════════════════════\n';
+                
+                return report;
+            },
+
+            async updateItemName(itemId, newName) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
                     item.name = newName;
-                    this.saveData();
+                    await this.saveMenu();
                     this.renderMenu();
                 }
             },
 
-            updateItemPrice(itemId, newPrice) {
+            async updateItemPrice(itemId, newPrice) {
                 const item = this.menuItems.find(i => i.id === itemId);
                 if (item) {
                     item.price = parseFloat(newPrice);
-                    this.saveData();
+                    await this.saveMenu();
                     this.renderMenu();
                 }
             },
 
-            deleteItem(itemId) {
+            async deleteItem(itemId) {
                 if (confirm('Delete this item?')) {
                     this.menuItems = this.menuItems.filter(i => i.id !== itemId);
-                    this.saveData();
+                    await this.saveMenu();
                     this.renderMenu();
                     this.renderMenuEditor();
                     this.playSound('click');
                 }
             },
 
-            addNewItem() {
+            async addNewItem() {
                 const name = prompt('Item name:');
                 const price = parseFloat(prompt('Item price:'));
                 
@@ -1159,7 +1796,7 @@
                         price: price
                     };
                     this.menuItems.push(newItem);
-                    this.saveData();
+                    await this.saveMenu();
                     this.renderMenu();
                     this.renderMenuEditor();
                     this.playSound('success');
