@@ -1224,8 +1224,58 @@
             <div id="shiftReportContent"></div>
             <div style="display: flex; gap: 15px; margin-top: 30px;">
                 <button class="submit-btn" style="background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.viewShiftHistory()">VIEW HISTORY</button>
+                <button class="submit-btn" style="background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.openAdminEdit()">ADMIN EDIT</button>
                 <button class="submit-btn" style="background: var(--accent);" onclick="app.saveShiftReport()">SAVE REPORT</button>
                 <button class="submit-btn" style="background: var(--warning);" onclick="app.clearShift()">CLEAR SHIFT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Edit Modal -->
+    <div id="adminEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">ADMIN EDIT - SHIFT DATA</div>
+                <button class="close-btn" onclick="app.closeAdminEdit()">✕ CLOSE</button>
+            </div>
+
+            <div style="background: var(--warning); color: var(--text-primary); padding: 15px; margin-bottom: 20px; border-radius: 4px; text-align: center; font-size: 12px; font-weight: 600; letter-spacing: 1px;">
+                ⚠️ WARNING: Editing these values will affect your shift report
+            </div>
+
+            <div class="form-group">
+                <label>Total Sales Revenue (RM)</label>
+                <input type="number" id="adminTotalSales" step="0.01" min="0" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 18px; font-weight: 600; font-family: 'Montserrat', sans-serif;">
+            </div>
+
+            <div class="form-group">
+                <label>Total Order Count</label>
+                <input type="number" id="adminOrderCount" min="0" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 18px; font-weight: 600; font-family: 'Montserrat', sans-serif;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label>Cash Payments (RM)</label>
+                    <input type="number" id="adminCash" step="0.01" min="0" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 16px; font-family: 'Montserrat', sans-serif;">
+                </div>
+                <div class="form-group">
+                    <label>Card Payments (RM)</label>
+                    <input type="number" id="adminCard" step="0.01" min="0" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 16px; font-family: 'Montserrat', sans-serif;">
+                </div>
+                <div class="form-group">
+                    <label>E-Wallet Payments (RM)</label>
+                    <input type="number" id="adminEwallet" step="0.01" min="0" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 16px; font-family: 'Montserrat', sans-serif;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Items Sold</label>
+                <div id="adminItemsList" style="background: var(--bg-tertiary); border: 1px solid var(--border); padding: 20px; max-height: 300px; overflow-y: auto;"></div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="submit-btn" style="flex: 1; background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.closeAdminEdit()">CANCEL</button>
+                <button class="submit-btn" style="flex: 1;" onclick="app.saveAdminEdit()">SAVE CHANGES</button>
             </div>
         </div>
     </div>
@@ -1497,7 +1547,12 @@
                     return;
                 }
 
-                const total = this.currentOrder.reduce((sum, item) => sum + item.price, 0);
+                // Calculate total with quantities
+                const total = this.currentOrder.reduce((sum, item) => {
+                    const quantity = item.quantity || 1;
+                    return sum + (item.price * quantity);
+                }, 0);
+                
                 this.currentPaymentMethod = method;
                 this.currentPaymentTotal = total;
 
@@ -2403,6 +2458,115 @@
             closeShiftHistory() {
                 document.getElementById('shiftHistoryModal').classList.remove('active');
                 this.playSound('click');
+            },
+
+            async openAdminEdit() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
+                    if (!snapshot.exists()) {
+                        alert('No shift data to edit');
+                        return;
+                    }
+
+                    const shift = snapshot.val();
+                    
+                    // Populate fields
+                    document.getElementById('adminTotalSales').value = shift.totalSales || 0;
+                    document.getElementById('adminOrderCount').value = shift.orderCount || 0;
+                    document.getElementById('adminCash').value = shift.paymentMethods?.cash || 0;
+                    document.getElementById('adminCard').value = shift.paymentMethods?.card || 0;
+                    document.getElementById('adminEwallet').value = shift.paymentMethods?.ewallet || 0;
+                    
+                    // Render items list
+                    const itemsDiv = document.getElementById('adminItemsList');
+                    if (shift.itemsSold && Object.keys(shift.itemsSold).length > 0) {
+                        itemsDiv.innerHTML = Object.entries(shift.itemsSold)
+                            .sort((a, b) => b[1].count - a[1].count)
+                            .map(([name, data]) => `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border);">
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 14px; font-weight: 500;">${name}</div>
+                                    </div>
+                                    <div style="display: flex; gap: 15px; align-items: center;">
+                                        <div>
+                                            <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Count</label>
+                                            <input type="number" class="admin-item-count" value="${data.count}" min="0" data-item-name="${name}" style="width: 80px; background: var(--bg-primary); border: 1px solid var(--border); padding: 8px; color: var(--text-primary); font-size: 14px; text-align: center;">
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Revenue (RM)</label>
+                                            <input type="number" class="admin-item-revenue" value="${data.revenue.toFixed(2)}" min="0" step="0.01" data-item-name="${name}" style="width: 100px; background: var(--bg-primary); border: 1px solid var(--border); padding: 8px; color: var(--text-primary); font-size: 14px; text-align: center;">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('');
+                    } else {
+                        itemsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-secondary);">No items sold yet</div>';
+                    }
+
+                    document.getElementById('adminEditModal').classList.add('active');
+                    this.playSound('click');
+                } catch (error) {
+                    console.error('Error opening admin edit:', error);
+                    alert('Error loading shift data');
+                }
+            },
+
+            closeAdminEdit() {
+                document.getElementById('adminEditModal').classList.remove('active');
+                this.playSound('click');
+            },
+
+            async saveAdminEdit() {
+                if (!confirm('Save these changes to the shift report?')) return;
+
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
+                    if (!snapshot.exists()) {
+                        alert('No shift data found');
+                        return;
+                    }
+
+                    const shift = snapshot.val();
+                    
+                    // Update main values
+                    shift.totalSales = parseFloat(document.getElementById('adminTotalSales').value) || 0;
+                    shift.orderCount = parseInt(document.getElementById('adminOrderCount').value) || 0;
+                    
+                    // Update payment methods
+                    shift.paymentMethods = {
+                        cash: parseFloat(document.getElementById('adminCash').value) || 0,
+                        card: parseFloat(document.getElementById('adminCard').value) || 0,
+                        ewallet: parseFloat(document.getElementById('adminEwallet').value) || 0
+                    };
+                    
+                    // Update items sold
+                    const countInputs = document.querySelectorAll('.admin-item-count');
+                    const revenueInputs = document.querySelectorAll('.admin-item-revenue');
+                    
+                    shift.itemsSold = shift.itemsSold || {};
+                    
+                    countInputs.forEach((input, index) => {
+                        const itemName = input.dataset.itemName;
+                        const count = parseInt(input.value) || 0;
+                        const revenue = parseFloat(revenueInputs[index].value) || 0;
+                        
+                        if (shift.itemsSold[itemName]) {
+                            shift.itemsSold[itemName].count = count;
+                            shift.itemsSold[itemName].revenue = revenue;
+                        }
+                    });
+
+                    // Save to database
+                    await window.dbSet(window.dbRef(window.db, 'current-shift'), shift);
+                    
+                    this.closeAdminEdit();
+                    this.closeShiftReport();
+                    this.playSound('success');
+                    alert('Shift data updated successfully!');
+                } catch (error) {
+                    console.error('Error saving admin edit:', error);
+                    alert('Error saving changes');
+                }
             },
 
             openStockManager() {
