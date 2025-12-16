@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background: var(--bg-primary);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             color: var(--text-primary);
             min-height: 100vh;
         }
@@ -37,7 +37,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: var(--bg-primary);
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             position: fixed;
             top: 0;
             left: 0;
@@ -53,11 +53,12 @@
         .login-container {
             background: var(--bg-secondary);
             padding: 50px;
-            border-radius: 2px;
+            border-radius: 4px;
             border: 1px solid var(--border);
             text-align: center;
             max-width: 400px;
             width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.1);
         }
 
         .login-title {
@@ -143,6 +144,7 @@
             border: 1px solid var(--border);
             flex-wrap: wrap;
             gap: 15px;
+            border-radius: 4px;
         }
 
         .logo {
@@ -235,17 +237,36 @@
             border: 1px solid var(--border);
             padding: 30px 20px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             text-align: center;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .menu-item:hover::before {
+            left: 100%;
         }
 
         .menu-item:hover {
-            border-color: var(--text-primary);
-            transform: translateY(-2px);
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.2);
         }
 
         .menu-item:active {
-            transform: scale(0.98);
+            transform: translateY(-2px);
         }
 
         .menu-item h3 {
@@ -268,6 +289,7 @@
             padding: 25px;
             display: flex;
             flex-direction: column;
+            border-radius: 4px;
         }
 
         .order-items {
@@ -354,15 +376,41 @@
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 3px;
             font-family: 'Montserrat', sans-serif;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .payment-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: var(--accent);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .payment-btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .payment-btn:hover {
-            background: var(--text-primary);
+            border-color: var(--accent);
             color: var(--bg-primary);
+        }
+
+        .payment-btn span {
+            position: relative;
+            z-index: 1;
         }
 
         .payment-btn.clear {
@@ -797,6 +845,66 @@
             letter-spacing: 2px;
         }
 
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 50px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .footer-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .footer-ig {
+            color: var(--accent);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .footer-ig:hover {
+            color: var(--text-primary);
+        }
+
+        .shift-history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .shift-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .shift-card:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .shift-card-date {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .shift-card-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         @media (max-width: 1200px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -889,10 +997,10 @@
                     </div>
                 </div>
                 <div class="payment-buttons">
-                    <button class="payment-btn" onclick="app.processPayment('cash')">CASH PAYMENT</button>
-                    <button class="payment-btn" onclick="app.processPayment('card')">CARD PAYMENT</button>
-                    <button class="payment-btn" onclick="app.processPayment('ewallet')">E-WALLET</button>
-                    <button class="payment-btn clear" onclick="app.clearOrder()">CLEAR ORDER</button>
+                    <button class="payment-btn" onclick="app.processPayment('cash')"><span>CASH PAYMENT</span></button>
+                    <button class="payment-btn" onclick="app.processPayment('card')"><span>CARD PAYMENT</span></button>
+                    <button class="payment-btn" onclick="app.processPayment('ewallet')"><span>E-WALLET</span></button>
+                    <button class="payment-btn clear" onclick="app.clearOrder()"><span>CLEAR ORDER</span></button>
                 </div>
             </div>
         </div>
@@ -908,6 +1016,12 @@
 
         <!-- History Mode -->
         <div id="historyMode" class="kitchen-view hidden"></div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-name">Developed by Muhammad Irfan</div>
+            <a href="https://instagram.com/hzetronics" target="_blank" class="footer-ig">@hzetronics</a>
+        </div>
     </div>
 
     <!-- Preorder Modal -->
@@ -981,9 +1095,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">SHIFT REPORT</div>
-                <button class="close-btn" onclick="app.closeShiftReport()">CLOSE</button>
+                <button class="close-btn" onclick="app.closeShiftReport()">✕ CLOSE</button>
             </div>
             <div id="shiftReportContent"></div>
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button class="submit-btn" style="background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.viewShiftHistory()">VIEW HISTORY</button>
+                <button class="submit-btn" style="background: var(--accent);" onclick="app.saveShiftReport()">SAVE REPORT</button>
+                <button class="submit-btn" style="background: var(--warning);" onclick="app.clearShift()">CLEAR SHIFT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shift History Modal -->
+    <div id="shiftHistoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">SHIFT HISTORY</div>
+                <button class="close-btn" onclick="app.closeShiftHistory()">✕ CLOSE</button>
+            </div>
+            <div id="shiftHistoryContent" class="shift-history-list"></div>
         </div>
     </div>
 
@@ -1705,6 +1835,159 @@
 
             closeShiftReport() {
                 document.getElementById('shiftReportModal').classList.remove('active');
+                this.playSound('click');
+            },
+
+            async clearShift() {
+                if (!confirm('Clear current shift? This will reset all statistics.')) return;
+                
+                try {
+                    await window.dbSet(window.dbRef(window.db, 'current-shift'), {
+                        startTime: new Date().toISOString(),
+                        totalSales: 0,
+                        orderCount: 0,
+                        paymentMethods: { cash: 0, card: 0, ewallet: 0, preorder: 0 },
+                        itemsSold: {}
+                    });
+                    
+                    this.closeShiftReport();
+                    this.playSound('success');
+                    alert('Shift cleared successfully!');
+                } catch (error) {
+                    console.error('Error clearing shift:', error);
+                    alert('Error clearing shift');
+                }
+            },
+
+            async saveShiftReport() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
+                    if (!snapshot.exists()) {
+                        alert('No shift data to save');
+                        return;
+                    }
+
+                    const shift = snapshot.val();
+                    const savedShift = {
+                        ...shift,
+                        endTime: new Date().toISOString(),
+                        savedAt: new Date().toLocaleString('en-MY', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                        })
+                    };
+
+                    const historyRef = window.dbPush(window.dbRef(window.db, 'shift-history'));
+                    await window.dbSet(historyRef, savedShift);
+                    
+                    this.playSound('success');
+                    alert('Shift report saved successfully!');
+                } catch (error) {
+                    console.error('Error saving shift:', error);
+                    alert('Error saving shift report');
+                }
+            },
+
+            async viewShiftHistory() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'shift-history'));
+                    const historyContent = document.getElementById('shiftHistoryContent');
+                    
+                    if (!snapshot.exists()) {
+                        historyContent.innerHTML = '<div class="empty-state">No shift history available</div>';
+                    } else {
+                        const history = Object.entries(snapshot.val()).map(([key, shift]) => ({
+                            key,
+                            ...shift
+                        })).reverse();
+
+                        historyContent.innerHTML = history.map(shift => `
+                            <div class="shift-card" onclick="app.viewShiftDetails('${shift.key}')">
+                                <div class="shift-card-date">${shift.savedAt}</div>
+                                <div class="shift-card-stats">
+                                    <span>Sales: RM ${shift.totalSales.toFixed(2)}</span>
+                                    <span>Orders: ${shift.orderCount}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+
+                    document.getElementById('shiftHistoryModal').classList.add('active');
+                    this.playSound('click');
+                } catch (error) {
+                    console.error('Error loading shift history:', error);
+                    alert('Error loading shift history');
+                }
+            },
+
+            async viewShiftDetails(shiftKey) {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, `shift-history/${shiftKey}`));
+                    if (!snapshot.exists()) return;
+
+                    const shift = snapshot.val();
+                    const reportContent = document.getElementById('shiftReportContent');
+
+                    const itemsHtml = Object.entries(shift.itemsSold)
+                        .sort((a, b) => b[1].count - a[1].count)
+                        .map(([name, data]) => `
+                            <div class="sold-item">
+                                <span>${name}</span>
+                                <span class="sold-item-count">${data.count}x • RM ${data.revenue.toFixed(2)}</span>
+                            </div>
+                        `).join('');
+
+                    reportContent.innerHTML = `
+                        <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: var(--bg-tertiary); border: 1px solid var(--border);">
+                            <div style="color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px;">SAVED ON</div>
+                            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px;">${shift.savedAt}</div>
+                        </div>
+                        <div class="report-grid">
+                            <div class="report-stat">
+                                <div class="stat-label">Total Sales</div>
+                                <div class="stat-value">RM ${shift.totalSales.toFixed(2)}</div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-label">Orders</div>
+                                <div class="stat-value">${shift.orderCount}</div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-label">Cash</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods.cash || 0).toFixed(2)}</div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-label">Card</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods.card || 0).toFixed(2)}</div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-label">E-Wallet</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods.ewallet || 0).toFixed(2)}</div>
+                            </div>
+                            <div class="report-stat">
+                                <div class="stat-label">Preorder</div>
+                                <div class="stat-value">RM ${(shift.paymentMethods.preorder || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="items-sold-list">
+                            <h4>Items Sold</h4>
+                            ${itemsHtml}
+                        </div>
+                    `;
+
+                    document.getElementById('shiftHistoryModal').classList.remove('active');
+                    document.getElementById('shiftReportModal').classList.add('active');
+                    this.playSound('click');
+                } catch (error) {
+                    console.error('Error viewing shift details:', error);
+                }
+            },
+
+            closeShiftHistory() {
+                document.getElementById('shiftHistoryModal').classList.remove('active');
                 this.playSound('click');
             }
         };
