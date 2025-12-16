@@ -1786,21 +1786,39 @@
             },
 
             async addNewItem() {
-                const name = prompt('Item name:');
-                const price = parseFloat(prompt('Item price:'));
+                const name = prompt('Enter item name:');
                 
-                if (name && !isNaN(price)) {
-                    const newItem = {
-                        id: Math.max(...this.menuItems.map(i => i.id), 0) + 1,
-                        name: name,
-                        price: price
-                    };
-                    this.menuItems.push(newItem);
-                    await this.saveMenu();
-                    this.renderMenu();
-                    this.renderMenuEditor();
-                    this.playSound('success');
+                if (!name || name.trim() === '') {
+                    alert('Item name is required');
+                    return;
                 }
+                
+                const priceInput = prompt('Enter item price (numbers only):');
+                
+                if (!priceInput) {
+                    alert('Price is required');
+                    return;
+                }
+                
+                const price = parseFloat(priceInput);
+                
+                if (isNaN(price) || price <= 0) {
+                    alert('Please enter a valid price greater than 0');
+                    return;
+                }
+                
+                const newItem = {
+                    id: Math.max(...this.menuItems.map(i => i.id), 0) + 1,
+                    name: name.trim(),
+                    price: price
+                };
+                
+                this.menuItems.push(newItem);
+                await this.saveMenu();
+                this.renderMenu();
+                this.renderMenuEditor();
+                this.playSound('success');
+                alert(`Item "${name}" added successfully!`);
             }
         };
 
