@@ -1885,7 +1885,7 @@
 
             async openShiftReport() {
                 try {
-                    const snapshot = await window.dbGet(window.db, 'current-shift'));
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
                         alert('No shift data available');
                         return;
