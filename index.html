@@ -650,6 +650,153 @@
             letter-spacing: 1px;
         }
 
+        .payment-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .payment-modal-content {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            padding: 50px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .payment-method-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 32px;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .payment-amount-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            letter-spacing: 3px;
+            margin: 30px 0;
+            color: var(--text-primary);
+        }
+
+        .cash-input-group {
+            margin: 30px 0;
+        }
+
+        .cash-input-group label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .cash-input-group input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            padding: 20px;
+            color: var(--text-primary);
+            font-size: 32px;
+            font-family: 'Bebas Neue', sans-serif;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .cash-input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .change-display {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent);
+            padding: 25px;
+            margin: 20px 0;
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .change-label {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .change-amount {
+            font-size: 42px;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        .payment-modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .payment-modal-btn {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            padding: 20px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .payment-modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .payment-modal-btn.confirm {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .payment-modal-btn.confirm:hover {
+            background: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        .payment-modal-btn.cancel {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .payment-modal-btn.cancel:hover {
+            background: var(--warning);
+            color: var(--text-primary);
+        }
+
+        .insufficient-cash {
+            color: var(--warning);
+            font-size: 12px;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
         @media (max-width: 1200px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -801,6 +948,34 @@
         </div>
     </div>
 
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="payment-modal">
+        <div class="payment-modal-content">
+            <div class="payment-method-title" id="paymentMethodTitle">CASH PAYMENT</div>
+            <div class="payment-amount-display">
+                TOTAL: RM <span id="paymentTotal">0.00</span>
+            </div>
+            
+            <div id="cashInputSection" class="cash-input-group" style="display: none;">
+                <label>CASH RECEIVED</label>
+                <input type="number" id="cashReceived" placeholder="0.00" step="0.01" min="0">
+                <div id="insufficientWarning" class="insufficient-cash" style="display: none;">
+                    ⚠ INSUFFICIENT AMOUNT
+                </div>
+            </div>
+
+            <div id="changeSection" class="change-display" style="display: none;">
+                <div class="change-label">CHANGE</div>
+                <div class="change-amount">RM <span id="changeAmount">0.00</span></div>
+            </div>
+
+            <div class="payment-modal-buttons">
+                <button class="payment-modal-btn cancel" onclick="app.cancelPayment()">CANCEL</button>
+                <button class="payment-modal-btn confirm" id="confirmPaymentBtn" onclick="app.confirmPayment()">CONFIRM PAYMENT</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Shift Report Modal -->
     <div id="shiftReportModal" class="modal">
         <div class="modal-content">
@@ -853,18 +1028,15 @@
             currentMode: 'pos',
             currentOrder: [],
             menuItems: [
-                { id: 1, name: 'Nasi Lemak', price: 5.00, category: 'mains' },
-                { id: 2, name: 'Mee Goreng', price: 6.50, category: 'mains' },
-                { id: 3, name: 'Roti Canai', price: 1.50, category: 'appetizers' },
-                { id: 4, name: 'Teh Tarik', price: 2.50, category: 'drinks' },
-                { id: 5, name: 'Kopi O', price: 2.00, category: 'drinks' },
-                { id: 6, name: 'Nasi Goreng', price: 6.00, category: 'mains' },
-                { id: 7, name: 'Laksa', price: 7.50, category: 'mains' },
-                { id: 8, name: 'Curry Puff', price: 2.00, category: 'appetizers' },
-                { id: 9, name: 'Milo Ais', price: 3.00, category: 'drinks' },
-                { id: 10, name: 'Nasi Ayam', price: 7.00, category: 'mains' },
-                { id: 11, name: 'Satay (10pcs)', price: 12.00, category: 'mains' },
-                { id: 12, name: 'Cendol', price: 4.50, category: 'desserts' }
+                { id: 1, name: 'Nasi Goreng Beef', price: 9.00, category: 'mains' },
+                { id: 2, name: 'Nasi Goreng Ayam', price: 8.50, category: 'mains' },
+                { id: 3, name: 'Orange Mocktail - Medium', price: 3.00, category: 'drinks' },
+                { id: 4, name: 'Orange Mocktail - Large', price: 5.00, category: 'drinks' },
+                { id: 5, name: 'Red Velvet', price: 5.50, category: 'desserts' },
+                { id: 6, name: 'Matcha', price: 6.00, category: 'desserts' },
+                { id: 7, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'desserts' },
+                { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'combo' },
+                { id: 9, name: 'Milk', price: 2.00, category: 'drinks' }
             ],
             preorderItems: [],
             sounds: {
@@ -980,11 +1152,82 @@
                     return;
                 }
 
+                const total = this.currentOrder.reduce((sum, item) => sum + item.price, 0);
+                this.currentPaymentMethod = method;
+                this.currentPaymentTotal = total;
+
+                // Update modal
+                document.getElementById('paymentTotal').textContent = total.toFixed(2);
+                
+                // Set title based on payment method
+                const titles = {
+                    'cash': 'CASH PAYMENT',
+                    'card': 'CARD PAYMENT',
+                    'ewallet': 'E-WALLET PAYMENT'
+                };
+                document.getElementById('paymentMethodTitle').textContent = titles[method];
+
+                // Show/hide cash input section
+                const cashSection = document.getElementById('cashInputSection');
+                const changeSection = document.getElementById('changeSection');
+                const cashInput = document.getElementById('cashReceived');
+                
+                if (method === 'cash') {
+                    cashSection.style.display = 'block';
+                    changeSection.style.display = 'none';
+                    cashInput.value = '';
+                    cashInput.focus();
+                } else {
+                    cashSection.style.display = 'none';
+                    changeSection.style.display = 'none';
+                }
+
+                document.getElementById('paymentModal').classList.add('active');
+                this.playSound('click');
+            },
+
+            calculateChange() {
+                const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+                const total = this.currentPaymentTotal;
+                const change = cashReceived - total;
+                
+                const changeSection = document.getElementById('changeSection');
+                const insufficientWarning = document.getElementById('insufficientWarning');
+                const confirmBtn = document.getElementById('confirmPaymentBtn');
+
+                if (cashReceived > 0) {
+                    if (change >= 0) {
+                        changeSection.style.display = 'block';
+                        document.getElementById('changeAmount').textContent = change.toFixed(2);
+                        insufficientWarning.style.display = 'none';
+                        confirmBtn.disabled = false;
+                        confirmBtn.style.opacity = '1';
+                    } else {
+                        changeSection.style.display = 'none';
+                        insufficientWarning.style.display = 'block';
+                        confirmBtn.disabled = true;
+                        confirmBtn.style.opacity = '0.5';
+                    }
+                } else {
+                    changeSection.style.display = 'none';
+                    insufficientWarning.style.display = 'none';
+                }
+            },
+
+            async confirmPayment() {
+                // Validate cash payment
+                if (this.currentPaymentMethod === 'cash') {
+                    const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
+                    if (cashReceived < this.currentPaymentTotal) {
+                        return; // Button should be disabled anyway
+                    }
+                }
+
                 const order = {
                     id: Date.now(),
                     items: [...this.currentOrder],
-                    total: this.currentOrder.reduce((sum, item) => sum + item.price, 0),
-                    paymentMethod: method,
+                    total: this.currentPaymentTotal,
+                    paymentMethod: this.currentPaymentMethod,
                     timestamp: new Date().toISOString(),
                     displayTime: new Date().toLocaleString('en-MY', { 
                         day: '2-digit',
@@ -1002,12 +1245,26 @@
                     
                     this.currentOrder = [];
                     this.updateOrderDisplay();
+                    this.closePaymentModal();
                     this.playSound('success');
-                    alert(`Payment received: RM ${order.total.toFixed(2)}`);
+                    
+                    alert(`Payment confirmed!\nOrder sent to kitchen.`);
                 } catch (error) {
                     console.error('Payment error:', error);
                     alert('Error processing payment');
                 }
+            },
+
+            cancelPayment() {
+                this.closePaymentModal();
+            },
+
+            closePaymentModal() {
+                document.getElementById('paymentModal').classList.remove('active');
+                document.getElementById('cashReceived').value = '';
+                document.getElementById('changeSection').style.display = 'none';
+                document.getElementById('insufficientWarning').style.display = 'none';
+                this.playSound('click');
             },
 
             async addOrderToKitchen(order) {
@@ -1457,6 +1714,12 @@
             // Wait for Firebase to initialize
             setTimeout(() => {
                 app.init();
+                
+                // Add event listener for cash input
+                const cashInput = document.getElementById('cashReceived');
+                if (cashInput) {
+                    cashInput.addEventListener('input', () => app.calculateChange());
+                }
             }, 1000);
         });
     </script>
