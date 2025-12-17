@@ -2220,6 +2220,7 @@
                             </ul>
                             <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
                             <button class="action-btn" onclick="app.completeOrder('${order.firebaseKey}')">MARK AS COMPLETED</button>
+                            <button class="action-btn" style="background: var(--warning); border-color: var(--warning);" onclick="app.deleteOrder('${order.firebaseKey}', ${order.total}, '${order.paymentMethod}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})">DELETE ORDER (ADMIN)</button>
                         </div>
                     `;
                 }).join('');
@@ -2231,6 +2232,74 @@
                     this.playSound('success');
                 } catch (error) {
                     console.error('Error completing order:', error);
+                }
+            },
+
+            async deleteOrder(firebaseKey, total, paymentMethod, itemsJson) {
+                // Require admin password
+                const password = await this.showPasswordModal('ADMIN ACCESS REQUIRED', 'Enter admin password to delete this order:');
+                if (password !== this.adminPassword) {
+                    await this.showNotification('Incorrect password. Access denied.', '🔒', 'ACCESS DENIED');
+                    return;
+                }
+
+                // Confirm deletion
+                const confirmed = await this.showConfirm(`Delete this order?\n\nThis will remove RM ${total.toFixed(2)} from the shift report and reverse all statistics.\n\nThis action cannot be undone.`);
+                if (!confirmed) return;
+
+                try {
+                    // Parse items
+                    const items = JSON.parse(itemsJson.replace(/&quot;/g, '"'));
+                    
+                    // Get current shift data
+                    const shiftSnapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
+                    if (shiftSnapshot.exists()) {
+                        const shift = shiftSnapshot.val();
+                        
+                        // Reverse the statistics
+                        shift.totalSales = (shift.totalSales || 0) - total;
+                        shift.orderCount = (shift.orderCount || 0) - 1;
+                        
+                        // Reverse payment method
+                        if (shift.paymentMethods) {
+                            shift.paymentMethods[paymentMethod] = (shift.paymentMethods[paymentMethod] || 0) - total;
+                            // Ensure no negative values
+                            if (shift.paymentMethods[paymentMethod] < 0) {
+                                shift.paymentMethods[paymentMethod] = 0;
+                            }
+                        }
+                        
+                        // Reverse items sold
+                        if (shift.itemsSold) {
+                            items.forEach(item => {
+                                if (shift.itemsSold[item.name]) {
+                                    shift.itemsSold[item.name].count = (shift.itemsSold[item.name].count || 0) - 1;
+                                    shift.itemsSold[item.name].revenue = (shift.itemsSold[item.name].revenue || 0) - item.price;
+                                    
+                                    // Remove item if count reaches 0
+                                    if (shift.itemsSold[item.name].count <= 0) {
+                                        delete shift.itemsSold[item.name];
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Ensure no negative values for main stats
+                        if (shift.totalSales < 0) shift.totalSales = 0;
+                        if (shift.orderCount < 0) shift.orderCount = 0;
+                        
+                        // Update shift in Firebase
+                        await window.dbSet(window.dbRef(window.db, 'current-shift'), shift);
+                    }
+                    
+                    // Delete the order from kitchen-orders
+                    await window.dbRemove(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`));
+                    
+                    this.playSound('success');
+                    await this.showNotification('Order deleted and statistics updated successfully!', '✓', 'SUCCESS');
+                } catch (error) {
+                    console.error('Error deleting order:', error);
+                    await this.showNotification('Error deleting order. Please try again.', '⚠️', 'ERROR');
                 }
             },
 
@@ -2680,7 +2749,14 @@
                     }
 
                     const orders = Object.values(snapshot.val());
-                    const sortedOrders = [...orders].reverse();
+                    
+                    // Get firebase keys for orders
+                    const ordersWithKeys = Object.entries(snapshot.val()).map(([key, order]) => ({
+                        firebaseKey: key,
+                        ...order
+                    }));
+                    
+                    const sortedOrders = [...ordersWithKeys].reverse();
                     
                     if (sortedOrders.length === 0) {
                         historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
@@ -2711,6 +2787,7 @@
                                 <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
                                     ${order.status === 'completed' ? '✓ Completed' : 'Pending'}
                                 </div>
+                                <button class="action-btn" style="background: var(--warning); border-color: var(--warning); margin-top: 15px;" onclick="app.deleteOrder('${order.firebaseKey}', ${order.total}, '${order.paymentMethod}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})">DELETE ORDER (ADMIN)</button>
                             </div>
                         `;
                     }).join('');
