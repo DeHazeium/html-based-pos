@@ -1592,8 +1592,8 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        const firebaseApp = initializeApp(firebaseConfig);
+        const database = getDatabase(firebaseApp);
 
         // Expose Firebase functions to global scope
         window.db = database;
