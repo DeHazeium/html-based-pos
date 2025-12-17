@@ -1609,6 +1609,7 @@
 
     <!-- Main Application Script -->
     <script>
+        // Define app object FIRST
         const app = {
             pin: '',
             correctPin: '1234',
@@ -3504,11 +3505,18 @@
             },
         };
 
-        // Expose app to window for onclick handlers
+        // CRITICAL: Expose app to window IMMEDIATELY for onclick handlers
         window.app = app;
-        console.log('App exposed to window:', window.app);
-        console.log('addPin function:', typeof window.app.addPin);
-        console.log('checkPin function:', typeof window.app.checkPin);
+        
+        // Verify it's accessible
+        if (typeof window.app !== 'undefined') {
+            console.log('✓ App successfully exposed to window');
+            console.log('✓ addPin:', typeof app.addPin);
+            console.log('✓ checkPin:', typeof app.checkPin);
+            console.log('✓ clearPin:', typeof app.clearPin);
+        } else {
+            console.error('✗ Failed to expose app to window!');
+        }
 
         // Initialize app when page loads
         window.addEventListener('DOMContentLoaded', () => {
