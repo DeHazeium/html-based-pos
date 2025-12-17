@@ -1411,21 +1411,75 @@
                 <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px;">Select Payment Method</div>
                 <div style="display: grid; gap: 12px;">
                     <button class="preorder-payment-btn" onclick="app.selectPreorderPayment('cash')" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 18px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">
-                        <span>💵 CASH</span>
+                        <span>CASH</span>
                         <span style="font-size: 20px; opacity: 0;" class="check-mark">✓</span>
                     </button>
                     <button class="preorder-payment-btn" onclick="app.selectPreorderPayment('card')" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 18px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">
-                        <span>💳 CARD</span>
+                        <span>CARD</span>
                         <span style="font-size: 20px; opacity: 0;" class="check-mark">✓</span>
                     </button>
                     <button class="preorder-payment-btn" onclick="app.selectPreorderPayment('ewallet')" style="background: var(--bg-tertiary); border: 2px solid var(--border); padding: 18px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 2px; font-family: 'Montserrat', sans-serif; border-radius: 4px; display: flex; align-items: center; justify-content: space-between;">
-                        <span>📱 E-WALLET</span>
+                        <span>E-WALLET</span>
                         <span style="font-size: 20px; opacity: 0;" class="check-mark">✓</span>
                     </button>
                 </div>
             </div>
 
             <button class="submit-btn" id="confirmPreorderPaymentBtn" onclick="app.finalizePreorderPayment()" style="opacity: 0.5; pointer-events: none;">CONFIRM PAYMENT</button>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <div class="modal-title" id="passwordModalTitle">ADMIN ACCESS</div>
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.6;" id="passwordModalMessage">Enter admin password to continue:</div>
+                <input type="password" id="passwordInput" placeholder="Enter password" style="width: 100%; background: var(--bg-tertiary); border: 2px solid var(--border); padding: 18px; color: var(--text-primary); font-size: 16px; font-family: 'Montserrat', sans-serif; border-radius: 4px; text-align: center; letter-spacing: 3px;" onkeypress="if(event.key === 'Enter') app.submitPassword()">
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="submit-btn" style="flex: 1; background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.cancelPassword()">CANCEL</button>
+                <button class="submit-btn" style="flex: 1;" onclick="app.submitPassword()">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <div class="modal-title" id="notificationTitle">NOTIFICATION</div>
+            </div>
+
+            <div style="background: var(--bg-tertiary); padding: 25px; margin-bottom: 25px; text-align: center; border-radius: 4px; border: 1px solid var(--border);">
+                <div id="notificationIcon" style="font-size: 48px; margin-bottom: 15px;">ℹ️</div>
+                <div id="notificationMessage" style="font-size: 14px; line-height: 1.6; color: var(--text-primary);"></div>
+            </div>
+
+            <button class="submit-btn" onclick="app.closeNotification()">OK</button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <div class="modal-title">CONFIRM ACTION</div>
+            </div>
+
+            <div style="background: var(--bg-tertiary); padding: 25px; margin-bottom: 25px; text-align: center; border-radius: 4px; border: 1px solid var(--border);">
+                <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                <div id="confirmMessage" style="font-size: 14px; line-height: 1.6; color: var(--text-primary);"></div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="submit-btn" style="flex: 1; background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.cancelConfirm()">CANCEL</button>
+                <button class="submit-btn" style="flex: 1; background: var(--warning);" onclick="app.acceptConfirm()">CONFIRM</button>
+            </div>
         </div>
     </div>
 
@@ -1533,6 +1587,9 @@
             currentPreorderId: null,
             currentPreorderKey: null,
             selectedPreorderPayment: null,
+            passwordResolve: null,
+            notificationResolve: null,
+            confirmResolve: null,
             preorderItems: [],
             sounds: {
                 click: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVajl8q9fGQc+l9ryz3UmBSR3yPDcjkALFFm06+yiWBIJQ5zf8L90JQQsg8rx2Io2CBhnu+3mn1gPDVGn5O+wYx0GOpHX8sl0JwYidcbw3I9ACxVds+3rpFYVCkeY4PKxaB8FM4nU89N8LQQngsnw2Yw6CRxvwO/jm1EMDkyj5e+vZBoGPJTY8s94KQQkcsfv25FADBVbte3soFgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv'),
@@ -1696,7 +1753,7 @@
                 
                 // Check stock availability
                 if (this.stockEnabled && !item.inStock) {
-                    alert(`${item.name} is out of stock!`);
+                    this.showNotification(`${item.name} is out of stock!`, '⚠️', 'OUT OF STOCK');
                     return;
                 }
                 
@@ -1750,9 +1807,10 @@
                 document.getElementById('totalAmount').textContent = `RM ${subtotal.toFixed(2)}`;
             },
 
-            clearOrder() {
+            async clearOrder() {
                 if (this.currentOrder.length === 0) return;
-                if (confirm('Clear current order?')) {
+                const confirmed = await this.showConfirm('Clear current order?');
+                if (confirmed) {
                     this.currentOrder = [];
                     this.updateOrderDisplay();
                     this.playSound('click');
@@ -1761,7 +1819,7 @@
 
             async processPayment(method) {
                 if (this.currentOrder.length === 0) {
-                    alert('Please add items to order');
+                    await this.showNotification('Please add items to order', 'ℹ️');
                     return;
                 }
 
@@ -1880,10 +1938,10 @@
                     this.closePaymentModal();
                     this.playSound('success');
                     
-                    alert(`Payment confirmed!\nOrder sent to kitchen.`);
+                    await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Payment error:', error);
-                    alert('Error processing payment');
+                    await this.showNotification('Error processing payment', '⚠️', 'ERROR');
                 }
             },
 
@@ -1945,7 +2003,7 @@
                     console.log('Shift stats updated successfully:', shiftData);
                 } catch (error) {
                     console.error('Error updating shift stats:', error);
-                    alert('Warning: Shift statistics may not have updated properly');
+                    // Silent fail - don't interrupt order flow
                 }
             },
 
@@ -2161,7 +2219,7 @@
                 
                 // Check stock availability
                 if (this.stockEnabled && !item.inStock) {
-                    alert(`${item.name} is out of stock!`);
+                    this.showNotification(`${item.name} is out of stock!`, '⚠️', 'OUT OF STOCK');
                     return;
                 }
                 
@@ -2225,7 +2283,7 @@
                 const customer = document.getElementById('preorderCustomer').value.trim();
 
                 if (!customer || this.preorderItems.length === 0) {
-                    alert('Please fill in customer name and add items');
+                    await this.showNotification('Please fill in customer name and add items', 'ℹ️');
                     return;
                 }
 
@@ -2274,7 +2332,7 @@
                     this.playSound('success');
                 } catch (error) {
                     console.error('Error creating preorder:', error);
-                    alert('Error creating preorder');
+                    await this.showNotification('Error creating preorder', '⚠️', 'ERROR');
                 }
             },
 
@@ -2383,16 +2441,97 @@
                     
                     this.closePreorderPaymentModal();
                     this.playSound('success');
-                    alert('Payment confirmed!');
+                    await this.showNotification('Payment confirmed!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error finalizing payment:', error);
-                    alert('Error confirming payment');
+                    await this.showNotification('Error confirming payment', '⚠️', 'ERROR');
                 }
             },
 
             closePreorderPaymentModal() {
                 document.getElementById('preorderPaymentModal').classList.remove('active');
                 this.selectedPreorderPayment = null;
+                this.playSound('click');
+            },
+
+            // Password Modal Functions
+            showPasswordModal(title, message) {
+                return new Promise((resolve) => {
+                    this.passwordResolve = resolve;
+                    document.getElementById('passwordModalTitle').textContent = title;
+                    document.getElementById('passwordModalMessage').textContent = message;
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('passwordModal').classList.add('active');
+                    setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+                    this.playSound('click');
+                });
+            },
+
+            submitPassword() {
+                const password = document.getElementById('passwordInput').value;
+                document.getElementById('passwordModal').classList.remove('active');
+                if (this.passwordResolve) {
+                    this.passwordResolve(password);
+                    this.passwordResolve = null;
+                }
+                this.playSound('click');
+            },
+
+            cancelPassword() {
+                document.getElementById('passwordModal').classList.remove('active');
+                if (this.passwordResolve) {
+                    this.passwordResolve(null);
+                    this.passwordResolve = null;
+                }
+                this.playSound('click');
+            },
+
+            // Notification Modal Functions
+            showNotification(message, icon = 'ℹ️', title = 'NOTIFICATION') {
+                return new Promise((resolve) => {
+                    this.notificationResolve = resolve;
+                    document.getElementById('notificationTitle').textContent = title;
+                    document.getElementById('notificationMessage').textContent = message;
+                    document.getElementById('notificationIcon').textContent = icon;
+                    document.getElementById('notificationModal').classList.add('active');
+                    this.playSound('click');
+                });
+            },
+
+            closeNotification() {
+                document.getElementById('notificationModal').classList.remove('active');
+                if (this.notificationResolve) {
+                    this.notificationResolve();
+                    this.notificationResolve = null;
+                }
+                this.playSound('click');
+            },
+
+            // Confirm Modal Functions
+            showConfirm(message) {
+                return new Promise((resolve) => {
+                    this.confirmResolve = resolve;
+                    document.getElementById('confirmMessage').textContent = message;
+                    document.getElementById('confirmModal').classList.add('active');
+                    this.playSound('click');
+                });
+            },
+
+            acceptConfirm() {
+                document.getElementById('confirmModal').classList.remove('active');
+                if (this.confirmResolve) {
+                    this.confirmResolve(true);
+                    this.confirmResolve = null;
+                }
+                this.playSound('click');
+            },
+
+            cancelConfirm() {
+                document.getElementById('confirmModal').classList.remove('active');
+                if (this.confirmResolve) {
+                    this.confirmResolve(false);
+                    this.confirmResolve = null;
+                }
                 this.playSound('click');
             },
 
@@ -2407,7 +2546,7 @@
                                 const preorder = preorders[key];
                                 
                                 if (preorder.paymentStatus !== 'paid') {
-                                    alert('Please confirm payment first');
+                                    await this.showNotification('Please confirm payment first', 'ℹ️');
                                     return;
                                 }
                                 
@@ -2422,7 +2561,7 @@
                                 await this.addOrderToKitchen(kitchenOrder);
                                 await this.updateShiftStats(kitchenOrder);
                                 this.playSound('success');
-                                alert('Order sent to kitchen!');
+                                await this.showNotification('Order sent to kitchen!', '✓', 'SUCCESS');
                                 break;
                             }
                         }
@@ -2507,7 +2646,7 @@
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
-                        alert('No shift data available');
+                        await this.showNotification('No shift data available', 'ℹ️');
                         return;
                     }
 
@@ -2567,7 +2706,7 @@
                     this.playSound('click');
                 } catch (error) {
                     console.error('Error opening shift report:', error);
-                    alert('Error loading shift report: ' + error.message);
+                    await this.showNotification('Error loading shift report: ' + error.message, '⚠️', 'ERROR');
                 }
             },
 
@@ -2578,14 +2717,14 @@
 
             async clearShift() {
                 // Require admin password
-                const password = prompt('Enter admin password to clear shift:');
+                const password = await this.showPasswordModal('ADMIN ACCESS REQUIRED', 'Enter admin password to clear shift:');
                 if (password !== this.adminPassword) {
-                    alert('Incorrect password. Access denied.');
-                    this.playSound('click');
+                    await this.showNotification('Incorrect password. Access denied.', '🔒', 'ACCESS DENIED');
                     return;
                 }
 
-                if (!confirm('Clear current shift? This will reset all statistics and order history.')) return;
+                const confirmed = await this.showConfirm('Clear current shift? This will reset all statistics and order history.');
+                if (!confirmed) return;
                 
                 try {
                     // Reset shift data
@@ -2602,10 +2741,10 @@
                     
                     this.closeShiftReport();
                     this.playSound('success');
-                    alert('Shift and order history cleared successfully!');
+                    await this.showNotification('Shift and order history cleared successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error clearing shift:', error);
-                    alert('Error clearing shift');
+                    await this.showNotification('Error clearing shift', '⚠️', 'ERROR');
                 }
             },
 
@@ -2613,7 +2752,7 @@
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
-                        alert('No shift data to save');
+                        await this.showNotification('No shift data to save', 'ℹ️');
                         return;
                     }
 
@@ -2635,10 +2774,10 @@
                     await window.dbSet(historyRef, savedShift);
                     
                     this.playSound('success');
-                    alert('Shift report saved successfully!');
+                    await this.showNotification('Shift report saved successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error saving shift:', error);
-                    alert('Error saving shift report');
+                    await this.showNotification('Error saving shift report', '⚠️', 'ERROR');
                 }
             },
 
@@ -2670,7 +2809,7 @@
                     this.playSound('click');
                 } catch (error) {
                     console.error('Error loading shift history:', error);
-                    alert('Error loading shift history');
+                    await this.showNotification('Error loading shift history', '⚠️', 'ERROR');
                 }
             },
 
@@ -2743,17 +2882,16 @@
 
             async openAdminEdit() {
                 // Require admin password
-                const password = prompt('Enter admin password to access edit mode:');
+                const password = await this.showPasswordModal('ADMIN ACCESS REQUIRED', 'Enter admin password to access edit mode:');
                 if (password !== this.adminPassword) {
-                    alert('Incorrect password. Access denied.');
-                    this.playSound('click');
+                    await this.showNotification('Incorrect password. Access denied.', '🔒', 'ACCESS DENIED');
                     return;
                 }
 
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
-                        alert('No shift data to edit');
+                        await this.showNotification('No shift data to edit', 'ℹ️');
                         return;
                     }
 
@@ -2796,7 +2934,7 @@
                     this.playSound('click');
                 } catch (error) {
                     console.error('Error opening admin edit:', error);
-                    alert('Error loading shift data');
+                    await this.showNotification('Error loading shift data', '⚠️', 'ERROR');
                 }
             },
 
@@ -2806,12 +2944,13 @@
             },
 
             async saveAdminEdit() {
-                if (!confirm('Save these changes to the shift report?')) return;
+                const confirmed = await this.showConfirm('Save these changes to the shift report?');
+                if (!confirmed) return;
 
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
                     if (!snapshot.exists()) {
-                        alert('No shift data found');
+                        await this.showNotification('No shift data found', 'ℹ️');
                         return;
                     }
 
@@ -2851,10 +2990,10 @@
                     this.closeAdminEdit();
                     this.closeShiftReport();
                     this.playSound('success');
-                    alert('Shift data updated successfully!');
+                    await this.showNotification('Shift data updated successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error saving admin edit:', error);
-                    alert('Error saving changes');
+                    await this.showNotification('Error saving changes', '⚠️', 'ERROR');
                 }
             },
 
@@ -2953,7 +3092,7 @@
                 this.renderMenu(); // Refresh menu display
                 this.closeStockManager();
                 this.playSound('success');
-                alert('Stock status and images updated successfully!');
+                await this.showNotification('Stock status and images updated successfully!', '✓', 'SUCCESS');
             },
 
             async saveMenuImages() {
