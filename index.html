@@ -2994,14 +2994,6 @@
                     </div>
                 `;
             },
-                                <button class="action-btn" style="background: var(--warning); border-color: var(--warning); margin-top: 15px;" onclick="app.deleteOrderById('${order.firebaseKey}')">DELETE ORDER (ADMIN)</button>
-                            </div>
-                        `;
-                    }).join('');
-                } catch (error) {
-                    console.error('Error rendering history:', error);
-                }
-            },
 
             async openShiftReport() {
                 try {
