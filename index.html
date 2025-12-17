@@ -1205,6 +1205,7 @@
             <div class="mode-selector">
                 <button class="mode-btn active" data-mode="pos" onclick="app.switchMode('pos')">POS</button>
                 <button class="mode-btn" data-mode="kitchen" onclick="app.switchMode('kitchen')">KITCHEN</button>
+                <button class="mode-btn" data-mode="pickup" onclick="app.switchMode('pickup')">PICKUP</button>
                 <button class="mode-btn" data-mode="preorder" onclick="app.switchMode('preorder')">PREORDER</button>
                 <button class="mode-btn" data-mode="history" onclick="app.switchMode('history')">HISTORY</button>
                 <button class="mode-btn" data-mode="stock" onclick="app.openStockManager()">STOCK</button>
@@ -1249,6 +1250,9 @@
 
         <!-- Kitchen Mode -->
         <div id="kitchenMode" class="kitchen-view hidden"></div>
+
+        <!-- Pickup Mode -->
+        <div id="pickupMode" class="kitchen-view hidden"></div>
 
         <!-- Preorder Mode -->
         <div id="preorderMode" class="hidden">
@@ -1309,6 +1313,12 @@
                 TOTAL: RM <span id="paymentTotal">0.00</span>
             </div>
             
+            <!-- Customer Name Input -->
+            <div style="margin-bottom: 20px;">
+                <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Customer Name (Optional)</label>
+                <input type="text" id="posCustomerName" placeholder="Enter customer name" style="width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 14px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
+            </div>
+
             <div id="cashInputSection" class="cash-input-group" style="display: none;">
                 <label>CASH RECEIVED</label>
                 <input type="number" id="cashReceived" placeholder="0.00" step="0.01" min="0">
@@ -1627,6 +1637,8 @@
             passwordResolve: null,
             notificationResolve: null,
             confirmResolve: null,
+            currentKitchenOrders: {},
+            currentHistoryOrders: {},
             preorderItems: [],
             sounds: {
                 click: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVajl8q9fGQc+l9ryz3UmBSR3yPDcjkALFFm06+yiWBIJQ5zf8L90JQQsg8rx2Io2CBhnu+3mn1gPDVGn5O+wYx0GOpHX8sl0JwYidcbw3I9ACxVds+3rpFYVCkeY4PKxaB8FM4nU89N8LQQngsnw2Yw6CRxvwO/jm1EMDkyj5e+vZBoGPJTY8s94KQQkcsfv25FADBVbte3soFgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv'),
@@ -1909,6 +1921,9 @@
                 this.currentPaymentMethod = method;
                 this.currentPaymentTotal = total;
 
+                // Clear customer name field
+                document.getElementById('posCustomerName').value = '';
+
                 // Update modal
                 document.getElementById('paymentTotal').textContent = total.toFixed(2);
                 
@@ -1976,6 +1991,12 @@
                     }
                 }
 
+                // Get customer name
+                const customerName = document.getElementById('posCustomerName').value.trim();
+
+                // Ask if order should be sent to kitchen
+                const sendToKitchen = await this.showConfirm('Send this order to kitchen?');
+                
                 // Expand items with quantities into separate items for kitchen
                 const expandedItems = [];
                 this.currentOrder.forEach(item => {
@@ -1995,6 +2016,7 @@
                     items: expandedItems,
                     total: this.currentPaymentTotal,
                     paymentMethod: this.currentPaymentMethod,
+                    customerName: customerName || null,
                     timestamp: new Date().toISOString(),
                     displayTime: new Date().toLocaleString('en-MY', { 
                         day: '2-digit',
@@ -2003,19 +2025,32 @@
                         minute: '2-digit',
                         hour12: true
                     }),
-                    status: 'pending'
+                    status: 'pending',
+                    orderType: 'normal' // Mark as normal order
                 };
 
                 try {
-                    await this.addOrderToKitchen(order);
-                    await this.updateShiftStats(order);
-                    
-                    this.currentOrder = [];
-                    this.updateOrderDisplay();
-                    this.closePaymentModal();
-                    this.playSound('success');
-                    
-                    await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
+                    if (sendToKitchen) {
+                        await this.addOrderToKitchen(order);
+                        await this.updateShiftStats(order);
+                        
+                        this.currentOrder = [];
+                        this.updateOrderDisplay();
+                        this.closePaymentModal();
+                        this.playSound('success');
+                        
+                        await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
+                    } else {
+                        // Just update stats and clear order without sending to kitchen
+                        await this.updateShiftStats(order);
+                        
+                        this.currentOrder = [];
+                        this.updateOrderDisplay();
+                        this.closePaymentModal();
+                        this.playSound('success');
+                        
+                        await this.showNotification('Payment confirmed!\nOrder not sent to kitchen.', '✓', 'SUCCESS');
+                    }
                 } catch (error) {
                     console.error('Payment error:', error);
                     await this.showNotification('Error processing payment', '⚠️', 'ERROR');
@@ -2117,6 +2152,13 @@
                     this.updateSyncStatus(false);
                 });
 
+                const pickupRef = window.dbRef(window.db, 'pickup-orders');
+                window.dbOnValue(pickupRef, (snapshot) => {
+                    if (this.currentMode === 'pickup') {
+                        this.renderPickupOrders(snapshot.val());
+                    }
+                });
+
                 const preordersRef = window.dbRef(window.db, 'preorders');
                 window.dbOnValue(preordersRef, (snapshot) => {
                     if (this.currentMode === 'preorder') {
@@ -2149,6 +2191,7 @@
 
                 document.getElementById('posMode').classList.add('hidden');
                 document.getElementById('kitchenMode').classList.add('hidden');
+                document.getElementById('pickupMode').classList.add('hidden');
                 document.getElementById('preorderMode').classList.add('hidden');
                 document.getElementById('historyMode').classList.add('hidden');
 
@@ -2157,6 +2200,9 @@
                 } else if (mode === 'kitchen') {
                     document.getElementById('kitchenMode').classList.remove('hidden');
                     this.loadKitchenOrders();
+                } else if (mode === 'pickup') {
+                    document.getElementById('pickupMode').classList.remove('hidden');
+                    this.loadPickupOrders();
                 } else if (mode === 'preorder') {
                     document.getElementById('preorderMode').classList.remove('hidden');
                     this.loadPreorders();
@@ -2174,6 +2220,96 @@
                     this.renderKitchenOrders(snapshot.val());
                 } catch (error) {
                     console.error('Error loading kitchen orders:', error);
+                }
+            },
+
+            async loadPickupOrders() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'pickup-orders'));
+                    this.renderPickupOrders(snapshot.val());
+                } catch (error) {
+                    console.error('Error loading pickup orders:', error);
+                }
+            },
+
+            renderPickupOrders(orders) {
+                const pickupDiv = document.getElementById('pickupMode');
+                
+                if (!orders) {
+                    pickupDiv.innerHTML = '<div class="empty-state">No orders ready for pickup</div>';
+                    return;
+                }
+
+                const orderArray = Object.entries(orders).map(([key, order]) => ({
+                    firebaseKey: key,
+                    ...order
+                }));
+                
+                if (orderArray.length === 0) {
+                    pickupDiv.innerHTML = '<div class="empty-state">No orders ready for pickup</div>';
+                    return;
+                }
+
+                pickupDiv.innerHTML = orderArray.map(order => {
+                    // Consolidate items
+                    const consolidatedItems = this.consolidateItems(order.items);
+                    const orderTypeBadge = order.orderType === 'preorder' 
+                        ? '<div class="order-badge preorder">Preorder</div>' 
+                        : '';
+                    
+                    return `
+                        <div class="kitchen-order" style="border-left: 4px solid var(--accent);">
+                            ${orderTypeBadge}
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); margin-bottom: 10px;">
+                                    ${order.customerName || 'ORDER #' + order.id.toString().slice(-4)}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">
+                                    ${order.displayTime} • ${order.paymentMethod.toUpperCase()}
+                                </div>
+                            </div>
+                            <ul>
+                                ${consolidatedItems.map(item => {
+                                    const itemTotal = item.price * item.quantity;
+                                    return `
+                                        <li>
+                                            <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                            <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                        </li>
+                                    `;
+                                }).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                            <button class="action-btn" style="background: var(--accent); border-color: var(--accent); color: var(--bg-primary);" onclick="app.orderPickedUp('${order.firebaseKey}')">ORDER PICKED UP</button>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            async orderPickedUp(firebaseKey) {
+                try {
+                    // Get the order data
+                    const orderSnapshot = await window.dbGet(window.dbRef(window.db, `pickup-orders/${firebaseKey}`));
+                    if (orderSnapshot.exists()) {
+                        const order = orderSnapshot.val();
+                        
+                        // Add to history with completed status
+                        const historyOrder = {
+                            ...order,
+                            status: 'completed',
+                            pickedUpAt: new Date().toISOString()
+                        };
+                        
+                        await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), historyOrder);
+                        
+                        // Remove from pickup
+                        await window.dbSet(window.dbRef(window.db, `pickup-orders/${firebaseKey}`), null);
+                        
+                        this.playSound('success');
+                        await this.showNotification('Order marked as picked up!', '✓', 'SUCCESS');
+                    }
+                } catch (error) {
+                    console.error('Error marking order as picked up:', error);
                 }
             },
 
@@ -2196,6 +2332,12 @@
                     kitchenDiv.innerHTML = '<div class="empty-state">No pending orders</div>';
                     return;
                 }
+
+                // Store orders for deletion reference
+                this.currentKitchenOrders = {};
+                pendingOrders.forEach(order => {
+                    this.currentKitchenOrders[order.firebaseKey] = order;
+                });
 
                 kitchenDiv.innerHTML = pendingOrders.map(order => {
                     // Consolidate items
@@ -2220,7 +2362,7 @@
                             </ul>
                             <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
                             <button class="action-btn" onclick="app.completeOrder('${order.firebaseKey}')">MARK AS COMPLETED</button>
-                            <button class="action-btn" style="background: var(--warning); border-color: var(--warning);" onclick="app.deleteOrder('${order.firebaseKey}', ${order.total}, '${order.paymentMethod}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})">DELETE ORDER (ADMIN)</button>
+                            <button class="action-btn" style="background: var(--warning); border-color: var(--warning);" onclick="app.deleteOrderById('${order.firebaseKey}')">DELETE ORDER (ADMIN)</button>
                         </div>
                     `;
                 }).join('');
@@ -2228,14 +2370,29 @@
 
             async completeOrder(firebaseKey) {
                 try {
-                    await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}/status`), 'completed');
-                    this.playSound('success');
+                    // Get the order data first
+                    const orderSnapshot = await window.dbGet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`));
+                    if (orderSnapshot.exists()) {
+                        const order = orderSnapshot.val();
+                        
+                        // Move to pickup area
+                        const pickupRef = window.dbRef(window.db, `pickup-orders/${firebaseKey}`);
+                        await window.dbSet(pickupRef, {
+                            ...order,
+                            movedToPickup: new Date().toISOString()
+                        });
+                        
+                        // Remove from kitchen
+                        await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
+                        
+                        this.playSound('success');
+                    }
                 } catch (error) {
                     console.error('Error completing order:', error);
                 }
             },
 
-            async deleteOrder(firebaseKey, total, paymentMethod, itemsJson) {
+            async deleteOrderById(firebaseKey) {
                 // Require admin password
                 const password = await this.showPasswordModal('ADMIN ACCESS REQUIRED', 'Enter admin password to delete this order:');
                 if (password !== this.adminPassword) {
@@ -2243,13 +2400,23 @@
                     return;
                 }
 
-                // Confirm deletion
-                const confirmed = await this.showConfirm(`Delete this order?\n\nThis will remove RM ${total.toFixed(2)} from the shift report and reverse all statistics.\n\nThis action cannot be undone.`);
-                if (!confirmed) return;
-
                 try {
-                    // Parse items
-                    const items = JSON.parse(itemsJson.replace(/&quot;/g, '"'));
+                    // Get the order data from Firebase first
+                    const orderSnapshot = await window.dbGet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`));
+                    
+                    if (!orderSnapshot.exists()) {
+                        await this.showNotification('Order not found', 'ℹ️');
+                        return;
+                    }
+                    
+                    const orderData = orderSnapshot.val();
+                    const total = orderData.total;
+                    const paymentMethod = orderData.paymentMethod;
+                    const items = orderData.items;
+
+                    // Confirm deletion
+                    const confirmed = await this.showConfirm(`Delete this order?\n\nThis will remove RM ${total.toFixed(2)} from the shift report and reverse all statistics.\n\nThis action cannot be undone.`);
+                    if (!confirmed) return;
                     
                     // Get current shift data
                     const shiftSnapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
@@ -2257,50 +2424,50 @@
                         const shift = shiftSnapshot.val();
                         
                         // Reverse the statistics
-                        shift.totalSales = (shift.totalSales || 0) - total;
-                        shift.orderCount = (shift.orderCount || 0) - 1;
+                        shift.totalSales = Math.max(0, (shift.totalSales || 0) - total);
+                        shift.orderCount = Math.max(0, (shift.orderCount || 0) - 1);
                         
                         // Reverse payment method
-                        if (shift.paymentMethods) {
-                            shift.paymentMethods[paymentMethod] = (shift.paymentMethods[paymentMethod] || 0) - total;
-                            // Ensure no negative values
-                            if (shift.paymentMethods[paymentMethod] < 0) {
-                                shift.paymentMethods[paymentMethod] = 0;
-                            }
+                        if (!shift.paymentMethods) {
+                            shift.paymentMethods = { cash: 0, card: 0, ewallet: 0 };
                         }
+                        shift.paymentMethods[paymentMethod] = Math.max(0, (shift.paymentMethods[paymentMethod] || 0) - total);
                         
                         // Reverse items sold
-                        if (shift.itemsSold) {
-                            items.forEach(item => {
-                                if (shift.itemsSold[item.name]) {
-                                    shift.itemsSold[item.name].count = (shift.itemsSold[item.name].count || 0) - 1;
-                                    shift.itemsSold[item.name].revenue = (shift.itemsSold[item.name].revenue || 0) - item.price;
-                                    
-                                    // Remove item if count reaches 0
-                                    if (shift.itemsSold[item.name].count <= 0) {
-                                        delete shift.itemsSold[item.name];
-                                    }
-                                }
-                            });
+                        if (!shift.itemsSold) {
+                            shift.itemsSold = {};
                         }
                         
-                        // Ensure no negative values for main stats
-                        if (shift.totalSales < 0) shift.totalSales = 0;
-                        if (shift.orderCount < 0) shift.orderCount = 0;
+                        items.forEach(item => {
+                            if (shift.itemsSold[item.name]) {
+                                shift.itemsSold[item.name].count = Math.max(0, (shift.itemsSold[item.name].count || 0) - 1);
+                                shift.itemsSold[item.name].revenue = Math.max(0, (shift.itemsSold[item.name].revenue || 0) - item.price);
+                                
+                                // Remove item if count reaches 0
+                                if (shift.itemsSold[item.name].count <= 0) {
+                                    delete shift.itemsSold[item.name];
+                                }
+                            }
+                        });
                         
                         // Update shift in Firebase
                         await window.dbSet(window.dbRef(window.db, 'current-shift'), shift);
                     }
                     
                     // Delete the order from kitchen-orders
-                    await window.dbRemove(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`));
+                    await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
                     
                     this.playSound('success');
                     await this.showNotification('Order deleted and statistics updated successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error deleting order:', error);
-                    await this.showNotification('Error deleting order. Please try again.', '⚠️', 'ERROR');
+                    await this.showNotification('Error: ' + error.message, '⚠️', 'ERROR');
                 }
+            },
+
+            async deleteOrder(firebaseKey, total, paymentMethod, itemsJson) {
+                // Legacy function - redirect to new one
+                await this.deleteOrderById(firebaseKey);
             },
 
             async loadPreorders() {
@@ -2701,7 +2868,8 @@
                                 const kitchenOrder = {
                                     ...preorder,
                                     timestamp: new Date().toISOString(),
-                                    status: 'pending'
+                                    status: 'pending',
+                                    orderType: 'preorder' // Mark as preorder
                                 };
                                 
                                 await this.addOrderToKitchen(kitchenOrder);
@@ -2756,38 +2924,76 @@
                         ...order
                     }));
                     
-                    const sortedOrders = [...ordersWithKeys].reverse();
+                    // Separate completed normal orders and preorders
+                    const completedNormal = ordersWithKeys.filter(order => 
+                        order.status === 'completed' && order.orderType !== 'preorder'
+                    ).reverse();
                     
-                    if (sortedOrders.length === 0) {
-                        historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
+                    const completedPreorders = ordersWithKeys.filter(order => 
+                        order.status === 'completed' && order.orderType === 'preorder'
+                    ).reverse();
+                    
+                    if (completedNormal.length === 0 && completedPreorders.length === 0) {
+                        historyDiv.innerHTML = '<div class="empty-state">No completed orders</div>';
                         return;
                     }
 
-                    historyDiv.innerHTML = sortedOrders.map(order => {
-                        // Consolidate items
-                        const consolidatedItems = this.consolidateItems(order.items);
-                        
-                        return `
-                            <div class="kitchen-order ${order.status === 'completed' ? 'completed' : ''}">
-                                <h3>Order #${order.id}</h3>
-                                <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
-                                ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
-                                <ul>
-                                    ${consolidatedItems.map(item => {
-                                        const itemTotal = item.price * item.quantity;
-                                        return `
-                                            <li>
-                                                <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
-                                                <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
-                                            </li>
-                                        `;
-                                    }).join('')}
-                                </ul>
-                                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                                <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
-                                    ${order.status === 'completed' ? '✓ Completed' : 'Pending'}
-                                </div>
-                                <button class="action-btn" style="background: var(--warning); border-color: var(--warning); margin-top: 15px;" onclick="app.deleteOrder('${order.firebaseKey}', ${order.total}, '${order.paymentMethod}', ${JSON.stringify(order.items).replace(/"/g, '&quot;')})">DELETE ORDER (ADMIN)</button>
+                    // Store orders for deletion reference
+                    this.currentHistoryOrders = {};
+                    ordersWithKeys.forEach(order => {
+                        this.currentHistoryOrders[order.firebaseKey] = order;
+                    });
+
+                    let html = '';
+                    
+                    // Normal Orders Section
+                    if (completedNormal.length > 0) {
+                        html += '<div style="margin-bottom: 30px;"><h2 style="font-family: \'Bebas Neue\', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);">NORMAL ORDERS</h2>';
+                        html += completedNormal.map(order => this.renderHistoryOrder(order)).join('');
+                        html += '</div>';
+                    }
+                    
+                    // Preorders Section
+                    if (completedPreorders.length > 0) {
+                        html += '<div><h2 style="font-family: \'Bebas Neue\', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);">PREORDERS</h2>';
+                        html += completedPreorders.map(order => this.renderHistoryOrder(order)).join('');
+                        html += '</div>';
+                    }
+
+                    historyDiv.innerHTML = html;
+                } catch (error) {
+                    console.error('Error rendering history:', error);
+                }
+            },
+
+            renderHistoryOrder(order) {
+                // Consolidate items
+                const consolidatedItems = this.consolidateItems(order.items);
+                
+                return `
+                    <div class="kitchen-order completed">
+                        <h3>Order #${order.id}</h3>
+                        <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
+                        ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
+                        <ul>
+                            ${consolidatedItems.map(item => {
+                                const itemTotal = item.price * item.quantity;
+                                return `
+                                    <li>
+                                        <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                        <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                    </li>
+                                `;
+                            }).join('')}
+                        </ul>
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                        <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                            ✓ Completed
+                        </div>
+                    </div>
+                `;
+            },
+                                <button class="action-btn" style="background: var(--warning); border-color: var(--warning); margin-top: 15px;" onclick="app.deleteOrderById('${order.firebaseKey}')">DELETE ORDER (ADMIN)</button>
                             </div>
                         `;
                     }).join('');
