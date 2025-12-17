@@ -467,10 +467,18 @@
             border: 1px solid var(--border);
             padding: 25px;
             position: relative;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .kitchen-order:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.15);
         }
 
         .kitchen-order.completed {
-            opacity: 0.5;
+            opacity: 0.6;
             border-color: var(--accent);
         }
 
@@ -479,41 +487,44 @@
         }
 
         .kitchen-order h3 {
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 10px;
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
+            color: var(--text-primary);
         }
 
         .order-time {
             color: var(--text-secondary);
             font-size: 11px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .order-notes {
             background: var(--bg-tertiary);
-            padding: 12px;
-            margin-bottom: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
             border-left: 3px solid var(--accent);
-            font-size: 12px;
-            color: var(--text-secondary);
+            font-size: 13px;
+            color: var(--text-primary);
             font-style: italic;
+            border-radius: 2px;
         }
 
         .order-badge {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 20px;
+            right: 20px;
             background: var(--accent);
             color: var(--bg-primary);
-            padding: 6px 12px;
-            font-size: 9px;
-            font-weight: 600;
+            padding: 8px 14px;
+            font-size: 10px;
+            font-weight: 700;
             letter-spacing: 2px;
             text-transform: uppercase;
+            border-radius: 2px;
         }
 
         .order-badge.preorder {
@@ -523,35 +534,74 @@
         .kitchen-order ul {
             list-style: none;
             margin-bottom: 20px;
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 4px;
         }
 
         .kitchen-order li {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
+            padding: 12px 0;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
+        }
+
+        .kitchen-order li:last-child {
+            border-bottom: none;
+        }
+
+        .kitchen-order li strong {
+            color: var(--accent);
+            font-weight: 700;
         }
 
         .action-btn {
             width: 100%;
             background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            padding: 15px;
+            padding: 16px;
             color: var(--text-primary);
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-family: 'Montserrat', sans-serif;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: var(--accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+
+        .action-btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .action-btn:hover {
-            background: var(--accent);
             border-color: var(--accent);
             color: var(--bg-primary);
+            transform: translateY(-2px);
+        }
+
+        .action-btn span {
+            position: relative;
+            z-index: 1;
         }
 
         .empty-state {
@@ -1398,6 +1448,23 @@
                 }
             },
 
+            // Helper function to consolidate items with same ID
+            consolidateItems(items) {
+                const consolidated = {};
+                items.forEach(item => {
+                    const key = item.id || item.name;
+                    if (consolidated[key]) {
+                        consolidated[key].quantity += 1;
+                    } else {
+                        consolidated[key] = {
+                            ...item,
+                            quantity: 1
+                        };
+                    }
+                });
+                return Object.values(consolidated);
+            },
+
             addPin(digit) {
                 if (this.pin.length < 4) {
                     this.pin += digit;
@@ -1856,19 +1923,32 @@
                     return;
                 }
 
-                kitchenDiv.innerHTML = pendingOrders.map(order => `
-                    <div class="kitchen-order">
-                        <h3>Order #${order.id}</h3>
-                        <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
-                        ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
-                        ${order.notes ? `<div class="order-notes">${order.notes}</div>` : ''}
-                        <ul>
-                            ${order.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
-                        </ul>
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                        <button class="action-btn" onclick="app.completeOrder('${order.firebaseKey}')">MARK AS COMPLETED</button>
-                    </div>
-                `).join('');
+                kitchenDiv.innerHTML = pendingOrders.map(order => {
+                    // Consolidate items
+                    const consolidatedItems = this.consolidateItems(order.items);
+                    
+                    return `
+                        <div class="kitchen-order">
+                            <h3>Order #${order.id}</h3>
+                            <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
+                            ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
+                            ${order.notes ? `<div class="order-notes">${order.notes}</div>` : ''}
+                            <ul>
+                                ${consolidatedItems.map(item => {
+                                    const itemTotal = item.price * item.quantity;
+                                    return `
+                                        <li>
+                                            <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                            <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                        </li>
+                                    `;
+                                }).join('')}
+                            </ul>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                            <button class="action-btn" onclick="app.completeOrder('${order.firebaseKey}')">MARK AS COMPLETED</button>
+                        </div>
+                    `;
+                }).join('');
             },
 
             async completeOrder(firebaseKey) {
@@ -2083,8 +2163,11 @@
                 listDiv.innerHTML = pending.map(preorder => {
                     const isPaid = preorder.paymentStatus === 'paid';
                     const paymentBadge = isPaid 
-                        ? '<div style="display: inline-block; background: var(--accent); color: var(--bg-primary); padding: 4px 12px; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-left: 10px;">PAID</div>'
-                        : '<div style="display: inline-block; background: var(--warning); color: var(--text-primary); padding: 4px 12px; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-left: 10px;">UNPAID</div>';
+                        ? '<div style="display: inline-block; background: var(--accent); color: var(--bg-primary); padding: 5px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-left: 10px; border-radius: 2px;">PAID</div>'
+                        : '<div style="display: inline-block; background: var(--warning); color: var(--text-primary); padding: 5px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-left: 10px; border-radius: 2px;">UNPAID</div>';
+                    
+                    // Consolidate items
+                    const consolidatedItems = this.consolidateItems(preorder.items);
                     
                     return `
                         <div class="kitchen-order preorder">
@@ -2092,7 +2175,15 @@
                             <h3>${preorder.customerName} ${paymentBadge}</h3>
                             <div class="order-time">${preorder.displayTime}</div>
                             <ul>
-                                ${preorder.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
+                                ${consolidatedItems.map(item => {
+                                    const itemTotal = item.price * item.quantity;
+                                    return `
+                                        <li>
+                                            <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                            <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                        </li>
+                                    `;
+                                }).join('')}
                             </ul>
                             <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${preorder.total.toFixed(2)}</div>
                             ${!isPaid ? `<button class="action-btn" style="margin-top: 15px; background: var(--accent); border-color: var(--accent); color: var(--bg-primary);" onclick="app.confirmPreorderPayment(${preorder.id})">Confirm Payment</button>` : ''}
@@ -2211,20 +2302,33 @@
                         return;
                     }
 
-                    historyDiv.innerHTML = sortedOrders.map(order => `
-                        <div class="kitchen-order ${order.status === 'completed' ? 'completed' : ''}">
-                            <h3>Order #${order.id}</h3>
-                            <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
-                            ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
-                            <ul>
-                                ${order.items.map(item => `<li><span>${item.name}</span><span>RM ${item.price.toFixed(2)}</span></li>`).join('')}
-                            </ul>
-                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                            <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
-                                ${order.status === 'completed' ? '✓ Completed' : 'Pending'}
+                    historyDiv.innerHTML = sortedOrders.map(order => {
+                        // Consolidate items
+                        const consolidatedItems = this.consolidateItems(order.items);
+                        
+                        return `
+                            <div class="kitchen-order ${order.status === 'completed' ? 'completed' : ''}">
+                                <h3>Order #${order.id}</h3>
+                                <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
+                                ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
+                                <ul>
+                                    ${consolidatedItems.map(item => {
+                                        const itemTotal = item.price * item.quantity;
+                                        return `
+                                            <li>
+                                                <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                                <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                            </li>
+                                        `;
+                                    }).join('')}
+                                </ul>
+                                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                                <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
+                                    ${order.status === 'completed' ? '✓ Completed' : 'Pending'}
+                                </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 } catch (error) {
                     console.error('Error rendering history:', error);
                 }
