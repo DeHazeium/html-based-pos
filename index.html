@@ -3506,11 +3506,16 @@
 
         // Expose app to window for onclick handlers
         window.app = app;
+        console.log('App exposed to window:', window.app);
+        console.log('addPin function:', typeof window.app.addPin);
+        console.log('checkPin function:', typeof window.app.checkPin);
 
         // Initialize app when page loads
         window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded');
             // Wait for Firebase to initialize
             setTimeout(() => {
+                console.log('Initializing app...');
                 app.init();
                 
                 // Add event listener for cash input
