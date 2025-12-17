@@ -1458,16 +1458,16 @@
             stockEnabled: true, // Toggle for stock management
             currentCategory: 'all', // Current selected category
             menuItems: [
-                { id: 1, name: 'Nasi Goreng Black Pepper Beef', price: 9.00, category: 'rice', stock: 50, image: '' },
-                { id: 2, name: 'Plain Rice Ball', price: 4.00, category: 'rice', stock: 30, image: '' },
-                { id: 3, name: 'Tuna Rice Ball', price: 6.00, category: 'rice', stock: 30, image: '' },
-                { id: 4, name: 'Orange Mocktail - Medium', price: 3.00, category: 'beverages', stock: 30, image: '' },
-                { id: 5, name: 'Orange Mocktail - Large', price: 5.00, category: 'beverages', stock: 30, image: '' },
-                { id: 6, name: 'Milk', price: 2.00, category: 'beverages', stock: 40, image: '' },
-                { id: 7, name: 'Red Velvet', price: 5.50, category: 'cookies', stock: 20, image: '' },
-                { id: 8, name: 'Matcha', price: 6.00, category: 'cookies', stock: 20, image: '' },
-                { id: 9, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'cookies', stock: 25, image: '' },
-                { id: 10, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'cookies', stock: 15, image: '' }
+                { id: 1, name: 'Nasi Goreng Black Pepper Beef', price: 9.00, category: 'rice', inStock: true, image: '' },
+                { id: 2, name: 'Plain Rice Ball', price: 4.00, category: 'rice', inStock: true, image: '' },
+                { id: 3, name: 'Tuna Rice Ball', price: 6.00, category: 'rice', inStock: true, image: '' },
+                { id: 4, name: 'Orange Mocktail - Medium', price: 3.00, category: 'beverages', inStock: true, image: '' },
+                { id: 5, name: 'Orange Mocktail - Large', price: 5.00, category: 'beverages', inStock: true, image: '' },
+                { id: 6, name: 'Milk', price: 2.00, category: 'beverages', inStock: true, image: '' },
+                { id: 7, name: 'Red Velvet', price: 5.50, category: 'cookies', inStock: true, image: '' },
+                { id: 8, name: 'Matcha', price: 6.00, category: 'cookies', inStock: true, image: '' },
+                { id: 9, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'cookies', inStock: true, image: '' },
+                { id: 10, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'cookies', inStock: true, image: '' }
             ],
             preorderItems: [],
             sounds: {
@@ -1480,6 +1480,36 @@
                 this.renderMenu();
                 this.setupFirebaseListeners();
                 this.initializeShift();
+                this.loadStockStatus();
+            },
+
+            async loadStockStatus() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'menu-stock-status'));
+                    if (snapshot.exists()) {
+                        const savedStock = snapshot.val();
+                        this.menuItems.forEach(item => {
+                            if (savedStock[item.id] !== undefined) {
+                                item.inStock = savedStock[item.id];
+                            }
+                        });
+                        this.renderMenu();
+                    }
+                } catch (error) {
+                    console.error('Error loading stock status:', error);
+                }
+            },
+
+            async saveStockStatus() {
+                try {
+                    const stockStatus = {};
+                    this.menuItems.forEach(item => {
+                        stockStatus[item.id] = item.inStock;
+                    });
+                    await window.dbSet(window.dbRef(window.db, 'menu-stock-status'), stockStatus);
+                } catch (error) {
+                    console.error('Error saving stock status:', error);
+                }
             },
 
             playSound(type) {
@@ -1552,17 +1582,14 @@
                 }
                 
                 grid.innerHTML = filteredItems.map(item => {
-                    const isOutOfStock = this.stockEnabled && item.stock <= 0;
-                    const isLowStock = this.stockEnabled && item.stock > 0 && item.stock <= 5;
+                    const isOutOfStock = this.stockEnabled && !item.inStock;
                     
                     let stockBadge = '';
                     if (this.stockEnabled) {
                         if (isOutOfStock) {
                             stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">OUT OF STOCK</div>';
-                        } else if (isLowStock) {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} LEFT</div>`;
                         } else {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} IN STOCK</div>`;
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                         }
                     } else {
                         stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
@@ -1603,7 +1630,7 @@
                 if (!item) return;
                 
                 // Check stock availability
-                if (this.stockEnabled && item.stock <= 0) {
+                if (this.stockEnabled && !item.inStock) {
                     alert(`${item.name} is out of stock!`);
                     return;
                 }
@@ -1612,14 +1639,6 @@
                 const existingItem = this.currentOrder.find(orderItem => orderItem.id === itemId);
                 
                 if (existingItem) {
-                    // Check if we have enough stock for one more
-                    if (this.stockEnabled) {
-                        const currentQuantity = existingItem.quantity || 1;
-                        if (item.stock < currentQuantity + 1) {
-                            alert(`Only ${item.stock} ${item.name} available in stock!`);
-                            return;
-                        }
-                    }
                     // Increment quantity if item exists
                     existingItem.quantity = (existingItem.quantity || 1) + 1;
                 } else {
@@ -1755,18 +1774,6 @@
                     if (cashReceived < this.currentPaymentTotal) {
                         return; // Button should be disabled anyway
                     }
-                }
-
-                // Deduct stock if enabled
-                if (this.stockEnabled) {
-                    this.currentOrder.forEach(orderItem => {
-                        const menuItem = this.menuItems.find(i => i.id === orderItem.id);
-                        if (menuItem) {
-                            const quantity = orderItem.quantity || 1;
-                            menuItem.stock -= quantity;
-                        }
-                    });
-                    this.renderMenu(); // Refresh menu to show updated stock
                 }
 
                 // Expand items with quantities into separate items for kitchen
@@ -2045,17 +2052,14 @@
                 
                 const grid = document.getElementById('preorderMenuGrid');
                 grid.innerHTML = this.menuItems.map(item => {
-                    const isOutOfStock = this.stockEnabled && item.stock <= 0;
-                    const isLowStock = this.stockEnabled && item.stock > 0 && item.stock <= 5;
+                    const isOutOfStock = this.stockEnabled && !item.inStock;
                     
                     let stockBadge = '';
                     if (this.stockEnabled) {
                         if (isOutOfStock) {
                             stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">OUT OF STOCK</div>';
-                        } else if (isLowStock) {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--warning); color: var(--text-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} LEFT</div>`;
                         } else {
-                            stockBadge = `<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">${item.stock} IN STOCK</div>`;
+                            stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                         }
                     } else {
                         stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
@@ -2091,7 +2095,7 @@
                 if (!item) return;
                 
                 // Check stock availability
-                if (this.stockEnabled && item.stock <= 0) {
+                if (this.stockEnabled && !item.inStock) {
                     alert(`${item.name} is out of stock!`);
                     return;
                 }
@@ -2100,14 +2104,6 @@
                 const existingItem = this.preorderItems.find(orderItem => orderItem.id === itemId);
                 
                 if (existingItem) {
-                    // Check if we have enough stock for one more
-                    if (this.stockEnabled) {
-                        const currentQuantity = existingItem.quantity || 1;
-                        if (item.stock < currentQuantity + 1) {
-                            alert(`Only ${item.stock} ${item.name} available in stock!`);
-                            return;
-                        }
-                    }
                     // Increment quantity if item exists
                     existingItem.quantity = (existingItem.quantity || 1) + 1;
                 } else {
@@ -2780,18 +2776,9 @@
                 const listDiv = document.getElementById('stockItemsList');
                 
                 listDiv.innerHTML = this.menuItems.map(item => {
-                    let badge = '';
-                    if (this.stockEnabled) {
-                        if (item.stock <= 0) {
-                            badge = '<span class="stock-badge out">Out of Stock</span>';
-                        } else if (item.stock <= 5) {
-                            badge = '<span class="stock-badge low">Low Stock</span>';
-                        } else {
-                            badge = '<span class="stock-badge ok">In Stock</span>';
-                        }
-                    } else {
-                        badge = '<span class="stock-badge ok">In Stock</span>';
-                    }
+                    const badge = item.inStock 
+                        ? '<span class="stock-badge ok">In Stock</span>'
+                        : '<span class="stock-badge out">Out of Stock</span>';
                     
                     const imagePreview = item.image 
                         ? `<img src="${item.image}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">` 
@@ -2805,16 +2792,26 @@
                                 <div class="stock-item-price" style="margin-bottom: 10px;">RM ${item.price.toFixed(2)}</div>
                                 <input type="text" class="stock-input" placeholder="Paste image URL here (optional)" value="${item.image || ''}" data-item-id="${item.id}" data-field="image" style="width: 100%; text-align: left; font-size: 12px; padding: 10px;">
                             </div>
-                            <div class="stock-input-group" style="flex-direction: column; align-items: flex-end; gap: 10px;">
+                            <div class="stock-input-group" style="flex-direction: column; align-items: flex-end; gap: 15px;">
                                 ${badge}
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Stock:</label>
-                                    <input type="number" class="stock-input" value="${item.stock}" min="0" data-item-id="${item.id}" data-field="stock" style="width: 100px; font-size: 16px; font-weight: 600;">
-                                </div>
+                                <label style="position: relative; display: inline-block; width: 70px; height: 40px; cursor: pointer;">
+                                    <input type="checkbox" ${item.inStock ? 'checked' : ''} onchange="app.toggleItemStock(${item.id})" style="opacity: 0; width: 0; height: 0;">
+                                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: ${item.inStock ? 'var(--accent)' : 'var(--bg-primary)'}; transition: .4s; border-radius: 40px; border: 2px solid ${item.inStock ? 'var(--accent)' : 'var(--border)'};"></span>
+                                    <span style="position: absolute; content: ''; height: 32px; width: 32px; left: ${item.inStock ? '34px' : '4px'}; bottom: 4px; background-color: ${item.inStock ? 'var(--bg-primary)' : 'var(--text-secondary)'}; transition: .4s; border-radius: 50%;"></span>
+                                </label>
                             </div>
                         </div>
                     `;
                 }).join('');
+            },
+
+            toggleItemStock(itemId) {
+                const item = this.menuItems.find(i => i.id === itemId);
+                if (item) {
+                    item.inStock = !item.inStock;
+                    this.renderStockList();
+                    this.playSound('click');
+                }
             },
 
             saveStock() {
@@ -2824,19 +2821,16 @@
                     const field = input.dataset.field;
                     const item = this.menuItems.find(i => i.id === itemId);
                     
-                    if (item) {
-                        if (field === 'stock') {
-                            item.stock = parseInt(input.value) || 0;
-                        } else if (field === 'image') {
-                            item.image = input.value.trim();
-                        }
+                    if (item && field === 'image') {
+                        item.image = input.value.trim();
                     }
                 });
                 
+                this.saveStockStatus(); // Save to Firebase
                 this.renderMenu(); // Refresh menu display
                 this.closeStockManager();
                 this.playSound('success');
-                alert('Stock and images updated successfully!');
+                alert('Stock status and images updated successfully!');
             }
         };
 
