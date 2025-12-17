@@ -316,6 +316,39 @@
             letter-spacing: 2px;
         }
 
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 12px 24px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Montserrat', sans-serif;
+            border-radius: 4px;
+        }
+
+        .category-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .category-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg-primary);
+        }
+
         .order-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
@@ -1157,7 +1190,15 @@
 
         <!-- POS Mode -->
         <div id="posMode" class="main-layout">
-            <div class="menu-grid" id="menuGrid"></div>
+            <div style="width: 100%;">
+                <div class="category-filter">
+                    <button class="category-btn active" onclick="app.filterCategory('all')">ALL</button>
+                    <button class="category-btn" onclick="app.filterCategory('rice')">RICE</button>
+                    <button class="category-btn" onclick="app.filterCategory('beverages')">BEVERAGES</button>
+                    <button class="category-btn" onclick="app.filterCategory('cookies')">COOKIES</button>
+                </div>
+                <div class="menu-grid" id="menuGrid"></div>
+            </div>
             <div class="order-panel">
                 <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; margin-bottom: 25px;">CURRENT ORDER</h2>
                 <div class="order-items" id="orderItems">
@@ -1415,16 +1456,18 @@
             currentMode: 'pos',
             currentOrder: [],
             stockEnabled: true, // Toggle for stock management
+            currentCategory: 'all', // Current selected category
             menuItems: [
-                { id: 1, name: 'Nasi Goreng Beef', price: 9.00, category: 'mains', stock: 50, image: '' },
-                { id: 2, name: 'Nasi Goreng Ayam', price: 8.50, category: 'mains', stock: 50, image: '' },
-                { id: 3, name: 'Orange Mocktail - Medium', price: 3.00, category: 'drinks', stock: 30, image: '' },
-                { id: 4, name: 'Orange Mocktail - Large', price: 5.00, category: 'drinks', stock: 30, image: '' },
-                { id: 5, name: 'Red Velvet', price: 5.50, category: 'desserts', stock: 20, image: '' },
-                { id: 6, name: 'Matcha', price: 6.00, category: 'desserts', stock: 20, image: '' },
-                { id: 7, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'desserts', stock: 25, image: '' },
-                { id: 8, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'combo', stock: 15, image: '' },
-                { id: 9, name: 'Milk', price: 2.00, category: 'drinks', stock: 40, image: '' }
+                { id: 1, name: 'Nasi Goreng Black Pepper Beef', price: 9.00, category: 'rice', stock: 50, image: '' },
+                { id: 2, name: 'Plain Rice Ball', price: 3.50, category: 'rice', stock: 30, image: '' },
+                { id: 3, name: 'Tuna Rice Ball', price: 4.50, category: 'rice', stock: 30, image: '' },
+                { id: 4, name: 'Orange Mocktail - Medium', price: 3.00, category: 'beverages', stock: 30, image: '' },
+                { id: 5, name: 'Orange Mocktail - Large', price: 5.00, category: 'beverages', stock: 30, image: '' },
+                { id: 6, name: 'Milk', price: 2.00, category: 'beverages', stock: 40, image: '' },
+                { id: 7, name: 'Red Velvet', price: 5.50, category: 'cookies', stock: 20, image: '' },
+                { id: 8, name: 'Matcha', price: 6.00, category: 'cookies', stock: 20, image: '' },
+                { id: 9, name: 'Classico - Original Chocolate Chip', price: 5.00, category: 'cookies', stock: 25, image: '' },
+                { id: 10, name: 'Combo - All flavours + Cold Iced Milk', price: 15.50, category: 'cookies', stock: 15, image: '' }
             ],
             preorderItems: [],
             sounds: {
@@ -1497,7 +1540,18 @@
 
             renderMenu() {
                 const grid = document.getElementById('menuGrid');
-                grid.innerHTML = this.menuItems.map(item => {
+                
+                // Filter items by category
+                const filteredItems = this.currentCategory === 'all' 
+                    ? this.menuItems 
+                    : this.menuItems.filter(item => item.category === this.currentCategory);
+                
+                if (filteredItems.length === 0) {
+                    grid.innerHTML = '<div class="empty-state">No items in this category</div>';
+                    return;
+                }
+                
+                grid.innerHTML = filteredItems.map(item => {
                     const isOutOfStock = this.stockEnabled && item.stock <= 0;
                     const isLowStock = this.stockEnabled && item.stock > 0 && item.stock <= 5;
                     
@@ -1529,6 +1583,19 @@
                         </div>
                     `;
                 }).join('');
+            },
+
+            filterCategory(category) {
+                this.currentCategory = category;
+                
+                // Update active button
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.renderMenu();
+                this.playSound('click');
             },
 
             addToOrder(itemId) {
