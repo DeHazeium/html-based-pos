@@ -30,6 +30,7 @@
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             color: var(--text-primary);
             min-height: 100vh;
+            padding-bottom: 80px; /* Space for footer */
         }
 
         .login-screen {
@@ -1519,11 +1520,47 @@
                 </div>
             </div>
 
+            <!-- Logo Management Section -->
+            <div style="margin-bottom: 30px; padding: 20px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px;">
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 15px;">Footer Logos</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">UiTM Logo URL</label>
+                        <input type="text" id="uitmLogoUrl" placeholder="Paste image URL (60x60px recommended)" style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 10px; color: var(--text-primary); font-size: 12px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">UGLAM Logo URL</label>
+                        <input type="text" id="uglamLogoUrl" placeholder="Paste image URL (60x60px recommended)" style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 10px; color: var(--text-primary); font-size: 12px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+
             <div id="stockItemsList"></div>
 
             <div style="margin-top: 20px; text-align: center;">
                 <button class="submit-btn" onclick="app.saveStock()">SAVE CHANGES</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Footer with Logos -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: var(--bg-primary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; z-index: 100;">
+        <!-- UiTM Logo Left -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img id="uitmLogo" src="" alt="UiTM" style="height: 60px; width: 60px; object-fit: contain; display: none;" onerror="this.style.display='none'; document.getElementById('uitmPlaceholder').style.display='flex';">
+            <div id="uitmPlaceholder" style="width: 60px; height: 60px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); text-align: center; padding: 5px;">UiTM</div>
+        </div>
+
+        <!-- Center Credits -->
+        <div style="text-align: center;">
+            <div style="font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 3px;">Developed by Muhammad Irfan</div>
+            <a href="https://instagram.com/hzetronics" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 10px; letter-spacing: 1px; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">@hzetronics</a>
+        </div>
+
+        <!-- UGLAM Logo Right -->
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img id="uglamLogo" src="" alt="UGLAM" style="height: 60px; width: 60px; object-fit: contain; display: none;" onerror="this.style.display='none'; document.getElementById('uglamPlaceholder').style.display='flex';">
+            <div id="uglamPlaceholder" style="width: 60px; height: 60px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); text-align: center; padding: 5px;">UGLAM</div>
         </div>
     </div>
 
@@ -1600,9 +1637,49 @@
             async init() {
                 await this.loadStockStatus();
                 await this.loadMenuImages();
+                await this.loadLogos();
                 this.renderMenu();
                 this.setupFirebaseListeners();
                 this.initializeShift();
+            },
+
+            async loadLogos() {
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'logos'));
+                    if (snapshot.exists()) {
+                        const logos = snapshot.val();
+                        
+                        if (logos.uitm) {
+                            const uitmImg = document.getElementById('uitmLogo');
+                            const uitmPlaceholder = document.getElementById('uitmPlaceholder');
+                            uitmImg.src = logos.uitm;
+                            uitmImg.style.display = 'block';
+                            uitmPlaceholder.style.display = 'none';
+                        }
+                        
+                        if (logos.uglam) {
+                            const uglamImg = document.getElementById('uglamLogo');
+                            const uglamPlaceholder = document.getElementById('uglamPlaceholder');
+                            uglamImg.src = logos.uglam;
+                            uglamImg.style.display = 'block';
+                            uglamPlaceholder.style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading logos:', error);
+                }
+            },
+
+            async saveLogos(uitmUrl, uglamUrl) {
+                try {
+                    const logos = {
+                        uitm: uitmUrl || '',
+                        uglam: uglamUrl || ''
+                    };
+                    await window.dbSet(window.dbRef(window.db, 'logos'), logos);
+                } catch (error) {
+                    console.error('Error saving logos:', error);
+                }
             },
 
             async loadStockStatus() {
@@ -2997,12 +3074,24 @@
                 }
             },
 
-            openStockManager() {
+            async openStockManager() {
                 const toggle = document.getElementById('stockToggle');
                 toggle.checked = this.stockEnabled;
                 
                 // Update status text
                 this.updateStockStatusText();
+                
+                // Load current logo URLs
+                try {
+                    const snapshot = await window.dbGet(window.dbRef(window.db, 'logos'));
+                    if (snapshot.exists()) {
+                        const logos = snapshot.val();
+                        document.getElementById('uitmLogoUrl').value = logos.uitm || '';
+                        document.getElementById('uglamLogoUrl').value = logos.uglam || '';
+                    }
+                } catch (error) {
+                    console.error('Error loading logo URLs:', error);
+                }
                 
                 this.renderStockList();
                 document.getElementById('stockManagerModal').classList.add('active');
@@ -3087,12 +3176,18 @@
                     }
                 });
                 
+                // Save logos
+                const uitmUrl = document.getElementById('uitmLogoUrl').value.trim();
+                const uglamUrl = document.getElementById('uglamLogoUrl').value.trim();
+                
                 await this.saveStockStatus(); // Save to Firebase
                 await this.saveMenuImages(); // Save images to Firebase
+                await this.saveLogos(uitmUrl, uglamUrl); // Save logos to Firebase
+                await this.loadLogos(); // Reload logos to display
                 this.renderMenu(); // Refresh menu display
                 this.closeStockManager();
                 this.playSound('success');
-                await this.showNotification('Stock status and images updated successfully!', '✓', 'SUCCESS');
+                await this.showNotification('Stock status, images, and logos updated successfully!', '✓', 'SUCCESS');
             },
 
             async saveMenuImages() {
