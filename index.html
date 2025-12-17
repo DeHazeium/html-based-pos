@@ -3504,6 +3504,9 @@
             },
         };
 
+        // Expose app to window for onclick handlers
+        window.app = app;
+
         // Initialize app when page loads
         window.addEventListener('DOMContentLoaded', () => {
             // Wait for Firebase to initialize
