@@ -3240,12 +3240,31 @@
                 if (!this.selectedPreorderPayment) return;
                 
                 try {
+                    // Get the preorder data
+                    const preorderSnapshot = await window.dbGet(window.dbRef(window.db, `preorders/${this.currentPreorderKey}`));
+                    if (!preorderSnapshot.exists()) {
+                        await this.showNotification('Preorder not found', '⚠️', 'ERROR');
+                        return;
+                    }
+                    
+                    const preorder = preorderSnapshot.val();
+                    
+                    // Update payment status in database
                     await window.dbSet(window.dbRef(window.db, `preorders/${this.currentPreorderKey}/paymentStatus`), 'paid');
                     await window.dbSet(window.dbRef(window.db, `preorders/${this.currentPreorderKey}/paymentMethod`), this.selectedPreorderPayment);
+                    
+                    // Update shift stats with preorder
+                    const orderForStats = {
+                        ...preorder,
+                        paymentMethod: this.selectedPreorderPayment,
+                        orderType: 'preorder'
+                    };
+                    await this.updateShiftStats(orderForStats);
                     
                     this.closePreorderPaymentModal();
                     // Sound removed
                     await this.showNotification('Payment confirmed!', '✓', 'SUCCESS');
+                    this.showToast('PAYMENT RECEIVED', `Preorder for ${preorder.customerName} - RM ${preorder.total.toFixed(2)} paid`, 'success');
                 } catch (error) {
                     console.error('Error finalizing payment:', error);
                     await this.showNotification('Error confirming payment', '⚠️', 'ERROR');
@@ -3534,14 +3553,34 @@
                     
                     // Get completed orders from history
                     const ordersSnapshot = await window.dbGet(window.dbRef(window.db, 'kitchen-orders'));
-                    let completedOrders = [];
+                    let allOrders = [];
                     if (ordersSnapshot.exists()) {
-                        completedOrders = Object.values(ordersSnapshot.val()).filter(o => o.status === 'completed');
+                        allOrders = Object.values(ordersSnapshot.val()).filter(o => o.status === 'completed');
                     }
+                    
+                    // Separate orders by type
+                    const walkInOrders = allOrders.filter(o => o.orderType !== 'preorder');
+                    const preorders = allOrders.filter(o => o.orderType === 'preorder');
+                    const discountedOrders = allOrders.filter(o => o.hasDiscount);
+                    
+                    // Calculate payment method totals
+                    const totalCash = shift.paymentMethods?.cash || 0;
+                    const totalCard = shift.paymentMethods?.card || 0;
+                    const totalEwallet = shift.paymentMethods?.ewallet || 0;
+                    
+                    // Count orders by payment method
+                    const cashOrders = allOrders.filter(o => o.paymentMethod === 'cash').length;
+                    const cardOrders = allOrders.filter(o => o.paymentMethod === 'card').length;
+                    const ewalletOrders = allOrders.filter(o => o.paymentMethod === 'ewallet').length;
+                    
+                    const totalDiscounts = shift.totalDiscounts || 0;
+                    const discountedOrdersCount = shift.discountedOrders || 0;
+                    const normalOrdersCount = shift.orderTypes?.normal || 0;
+                    const preordersCount = shift.orderTypes?.preorder || 0;
                     
                     const reportContent = document.getElementById('shiftReportContent');
 
-                    // Handle empty itemsSold
+                    // Top items sold
                     let itemsHtml = '';
                     if (shift.itemsSold && Object.keys(shift.itemsSold).length > 0) {
                         itemsHtml = Object.entries(shift.itemsSold)
@@ -3555,52 +3594,49 @@
                     } else {
                         itemsHtml = '<div class="empty-state">No items sold yet</div>';
                     }
-
-                    // Calculate totals
-                    const totalCash = shift.paymentMethods?.cash || 0;
-                    const totalCard = shift.paymentMethods?.card || 0;
-                    const totalEwallet = shift.paymentMethods?.ewallet || 0;
-                    const totalDiscounts = shift.totalDiscounts || 0;
-                    const discountedOrders = shift.discountedOrders || 0;
-                    const normalOrders = shift.orderTypes?.normal || 0;
-                    const preorders = shift.orderTypes?.preorder || 0;
                     
                     // Format shift start time
                     const startTime = new Date(shift.startTime);
-                    const duration = Math.floor((Date.now() - startTime.getTime()) / (1000 * 60)); // minutes
+                    const duration = Math.floor((Date.now() - startTime.getTime()) / (1000 * 60));
                     const hours = Math.floor(duration / 60);
                     const minutes = duration % 60;
                     
-                    // Completed orders summary
-                    let ordersHtml = '';
-                    if (completedOrders.length > 0) {
-                        ordersHtml = completedOrders.slice(-10).reverse().map(order => `
-                            <div style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <span style="font-weight: 600;">#${order.id.toString().slice(-4)}</span>
-                                    <span style="color: var(--accent);">RM ${order.total.toFixed(2)}</span>
-                                </div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">
-                                    ${order.displayTime} • ${order.paymentMethod.toUpperCase()} • ${order.orderType === 'preorder' ? 'PREORDER' : 'WALK-IN'}
-                                    ${order.hasDiscount ? ` • DISCOUNTED` : ''}
-                                </div>
+                    // Generate order lists
+                    const renderOrderList = (orders, title) => {
+                        if (orders.length === 0) return '';
+                        return `
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="margin-bottom: 10px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">${title} (${orders.length})</h4>
+                                ${orders.map(order => `
+                                    <div style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                            <span style="font-weight: 600;">#${order.id.toString().slice(-4)}</span>
+                                            <span style="color: var(--accent); font-weight: 600;">RM ${order.total.toFixed(2)}</span>
+                                        </div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">
+                                            ${order.displayTime} • ${order.paymentMethod.toUpperCase()}
+                                            ${order.hasDiscount ? ` • <span style="color: var(--warning);">DISCOUNTED (RM ${order.totalDiscount.toFixed(2)} off)</span>` : ''}
+                                        </div>
+                                        ${order.customerName ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;">Customer: ${order.customerName}</div>` : ''}
+                                    </div>
+                                `).join('')}
                             </div>
-                        `).join('');
-                    } else {
-                        ordersHtml = '<div class="empty-state">No completed orders yet</div>';
-                    }
+                        `;
+                    };
 
                     reportContent.innerHTML = `
+                        <!-- SHIFT DURATION -->
                         <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 4px; margin-bottom: 20px; border: 1px solid var(--border);">
                             <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Shift Duration</div>
                             <div style="font-size: 20px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">${hours}h ${minutes}m</div>
                             <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Started: ${startTime.toLocaleString('en-MY')}</div>
                         </div>
                         
+                        <!-- MAIN STATS -->
                         <div class="report-grid">
                             <div class="report-stat" style="grid-column: span 2;">
                                 <div class="stat-label">Total Sales</div>
-                                <div class="stat-value" style="font-size: 32px;">RM ${(shift.totalSales || 0).toFixed(2)}</div>
+                                <div class="stat-value" style="font-size: 32px; color: var(--accent);">RM ${(shift.totalSales || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
                                 <div class="stat-label">Total Orders</div>
@@ -3612,17 +3648,21 @@
                             </div>
                         </div>
                         
+                        <!-- ORDER TYPES -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--border);">
+                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--accent);">
                                 <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">WALK-IN ORDERS</div>
-                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${normalOrders}</div>
+                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${normalOrdersCount}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">RM ${walkInOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</div>
                             </div>
-                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--border);">
+                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--accent);">
                                 <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">PREORDERS</div>
-                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${preorders}</div>
+                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${preordersCount}</div>
+                                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">RM ${preorders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</div>
                             </div>
                         </div>
                         
+                        <!-- DISCOUNTS -->
                         ${totalDiscounts > 0 ? `
                         <div style="background: var(--warning); color: var(--bg-primary); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3631,36 +3671,52 @@
                                     <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">RM ${totalDiscounts.toFixed(2)}</div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 20px; font-family: 'Bebas Neue', sans-serif;">${discountedOrders}</div>
+                                    <div style="font-size: 20px; font-family: 'Bebas Neue', sans-serif;">${discountedOrdersCount}</div>
                                     <div style="font-size: 11px; opacity: 0.9;">Orders</div>
                                 </div>
                             </div>
                         </div>
                         ` : ''}
                         
-                        <div class="report-grid" style="margin-bottom: 20px;">
-                            <div class="report-stat">
-                                <div class="stat-label">💵 Cash</div>
-                                <div class="stat-value">RM ${totalCash.toFixed(2)}</div>
-                            </div>
-                            <div class="report-stat">
-                                <div class="stat-label">💳 Card</div>
-                                <div class="stat-value">RM ${totalCard.toFixed(2)}</div>
-                            </div>
-                            <div class="report-stat">
-                                <div class="stat-label">📱 E-Wallet</div>
-                                <div class="stat-value">RM ${totalEwallet.toFixed(2)}</div>
+                        <!-- PAYMENT METHODS -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 15px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">PAYMENT METHODS</h4>
+                            <div class="report-grid">
+                                <div class="report-stat" style="border-color: var(--accent);">
+                                    <div class="stat-label">Cash</div>
+                                    <div class="stat-value" style="color: var(--accent);">RM ${totalCash.toFixed(2)}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${cashOrders} orders</div>
+                                </div>
+                                <div class="report-stat" style="border-color: var(--accent);">
+                                    <div class="stat-label">Card</div>
+                                    <div class="stat-value" style="color: var(--accent);">RM ${totalCard.toFixed(2)}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${cardOrders} orders</div>
+                                </div>
+                                <div class="report-stat" style="border-color: var(--accent);">
+                                    <div class="stat-label">E-Wallet</div>
+                                    <div class="stat-value" style="color: var(--accent);">RM ${totalEwallet.toFixed(2)}</div>
+                                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${ewalletOrders} orders</div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="items-sold-list" style="margin-bottom: 20px;">
-                            <h4>Top Items Sold (by revenue)</h4>
-                            ${itemsHtml}
+                        <!-- TOP ITEMS -->
+                        <div style="margin-bottom: 20px;">
+                            <h4 style="margin-bottom: 15px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">TOP ITEMS SOLD (BY REVENUE)</h4>
+                            <div class="items-sold-list">
+                                ${itemsHtml}
+                            </div>
                         </div>
                         
+                        <!-- ORDERS BREAKDOWN -->
                         <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 4px; border: 1px solid var(--border);">
-                            <h4 style="margin-bottom: 15px;">Recent Completed Orders (Last 10)</h4>
-                            ${ordersHtml}
+                            <h3 style="margin-bottom: 20px; color: var(--accent); font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 20px;">COMPLETED ORDERS BREAKDOWN</h3>
+                            
+                            ${renderOrderList(walkInOrders, 'WALK-IN ORDERS')}
+                            ${renderOrderList(preorders, 'PREORDERS')}
+                            ${renderOrderList(discountedOrders, 'DISCOUNTED ORDERS')}
+                            
+                            ${allOrders.length === 0 ? '<div class="empty-state">No completed orders yet</div>' : ''}
                         </div>
                     `;
 
