@@ -2313,6 +2313,12 @@
             },
 
             async confirmPayment() {
+                // Validate order exists
+                if (!this.currentOrder || this.currentOrder.length === 0) {
+                    await this.showNotification('No items in order', '⚠️', 'ERROR');
+                    return;
+                }
+                
                 // Validate cash payment
                 if (this.currentPaymentMethod === 'cash') {
                     const cashReceived = parseFloat(document.getElementById('cashReceived').value) || 0;
@@ -2330,14 +2336,21 @@
                 // Ask if order should be sent to kitchen
                 const sendToKitchen = await this.showConfirm('Send this order to kitchen?');
                 
-                // Calculate original total and discount amount
-                let originalTotal = 0;
-                let totalDiscount = 0;
-                let hasDiscount = false;
-                
-                // Expand items with quantities into separate items for kitchen
-                const expandedItems = [];
-                this.currentOrder.forEach(item => {
+                try {
+                    // Calculate original total and discount amount
+                    let originalTotal = 0;
+                    let totalDiscount = 0;
+                    let hasDiscount = false;
+                    
+                    // Expand items with quantities into separate items for kitchen
+                    const expandedItems = [];
+                    this.currentOrder.forEach(item => {
+                    // Validate item has required properties
+                    if (!item.id || !item.name || item.price === undefined) {
+                        console.error('Invalid item in order:', item);
+                        throw new Error(`Invalid item: ${item.name || 'Unknown'}`);
+                    }
+                    
                     const quantity = item.quantity || 1;
                     const originalPrice = item.price; // This is always the original price from menuItems
                     const currentPrice = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
@@ -2357,7 +2370,7 @@
                             id: item.id,
                             name: item.name,
                             price: currentPrice, // Use discounted price if available
-                            category: item.category
+                            category: item.category || 'General'
                         };
                         
                         // Only add discount-related fields if item actually has discount
@@ -2372,28 +2385,27 @@
                     }
                 });
 
-                const order = {
-                    id: Date.now(),
-                    items: expandedItems,
-                    total: this.currentPaymentTotal,
-                    originalTotal: hasDiscount ? originalTotal : undefined,
-                    totalDiscount: hasDiscount ? totalDiscount : undefined,
-                    hasDiscount: hasDiscount,
-                    paymentMethod: this.currentPaymentMethod,
-                    customerName: customerName || null,
-                    timestamp: new Date().toISOString(),
-                    displayTime: new Date().toLocaleString('en-MY', { 
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    }),
-                    status: 'pending',
-                    orderType: 'normal' // Mark as normal order
-                };
+                    const order = {
+                        id: Date.now(),
+                        items: expandedItems,
+                        total: this.currentPaymentTotal,
+                        originalTotal: hasDiscount ? originalTotal : undefined,
+                        totalDiscount: hasDiscount ? totalDiscount : undefined,
+                        hasDiscount: hasDiscount,
+                        paymentMethod: this.currentPaymentMethod,
+                        customerName: customerName || null,
+                        timestamp: new Date().toISOString(),
+                        displayTime: new Date().toLocaleString('en-MY', { 
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                        }),
+                        status: 'pending',
+                        orderType: 'normal' // Mark as normal order
+                    };
 
-                try {
                     if (sendToKitchen) {
                         if (window.db && window.dbRef && window.dbSet) {
                             await this.addOrderToKitchen(order);
@@ -2418,7 +2430,7 @@
                     }
                 } catch (error) {
                     console.error('Payment error:', error);
-                    await this.showNotification('Error processing payment', '⚠️', 'ERROR');
+                    await this.showNotification(`Error processing payment: ${error.message}`, '⚠️', 'ERROR');
                 }
             },
 
