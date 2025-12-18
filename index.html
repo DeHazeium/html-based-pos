@@ -1182,9 +1182,158 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            padding: 20px 25px;
+            min-width: 300px;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0px;
+            pointer-events: auto;
+            animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toast.exit {
+            animation: slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            animation: progressBar 3s linear forwards;
+        }
+
+        @keyframes progressBar {
+            from {
+                width: 100%;
+            }
+            to {
+                width: 0%;
+            }
+        }
+
+        .toast-icon {
+            font-size: 28px;
+            line-height: 1;
+            flex-shrink: 0;
+            display: none; /* Hide icon since it's empty */
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .toast-message {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+            line-height: 1;
+            transition: color 0.2s;
+            margin-left: 15px;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        .toast.success {
+            border-color: var(--accent);
+        }
+
+        .toast.warning {
+            border-color: var(--warning);
+        }
+
+        .toast.warning .toast-title {
+            color: var(--warning);
+        }
+
+        .toast.warning .toast-message {
+            color: var(--text-primary); /* White text for better contrast */
+        }
+
+        .toast.warning::before {
+            background: var(--warning);
+        }
+
+        .toast.info {
+            border-color: #3b82f6;
+        }
+
+        .toast.info .toast-title {
+            color: #3b82f6;
+        }
+
+        .toast.info::before {
+            background: #3b82f6;
+        }
     </style>
 </head>
 <body>
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- Login Screen -->
     <div id="loginScreen" class="login-screen">
         <div class="login-container">
@@ -1671,6 +1820,40 @@
                 success: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVajl8q9fGQc+l9ryz3UmBSR3yPDcjkALFFm06+yiWBIJQ5zf8L90JQQsg8rx2Io2CBhnu+3mn1gPDVGn5O+wYx0GOpHX8sl0JwYidcbw3I9ACxVds+3rpFYVCkeY4PKxaB8FM4nU89N8LQQngsnw2Yw6CRxvwO/jm1EMDkyj5e+vZBoGPJTY8s94KQQkcsfv25FADBVbte3soFgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv')
             },
 
+            showToast(title, message, type = 'success', duration = 3000) {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    success: '',
+                    warning: '',
+                    info: '',
+                    order: ''
+                };
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type] || icons.success}</div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="this.parentElement.classList.add('exit')">×</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Auto remove after duration
+                setTimeout(() => {
+                    toast.classList.add('exit');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, duration);
+            },
+
             async init() {
                 try {
                     await this.loadStockStatus();
@@ -1883,7 +2066,7 @@
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 8px;">
-                                    <button class="remove-btn" style="background: var(--warning); font-size: 11px; padding: 8px 12px;" onclick="app.openDiscountModal(${index})">💰 DISCOUNT</button>
+                                    <button class="remove-btn" style="background: var(--warning); font-size: 11px; padding: 8px 12px;" onclick="app.openDiscountModal(${index})">DISCOUNT</button>
                                     <button class="remove-btn" onclick="app.removeFromOrder(${index})">Remove</button>
                                 </div>
                             </div>
@@ -2026,6 +2209,11 @@
                 this.closeDiscountModal();
                 // Sound removed
                 await this.showNotification('Discount applied successfully!', '✓', 'SUCCESS');
+                
+                const discountText = this.currentDiscountType === 'percentage' 
+                    ? `${discountAmount}% off` 
+                    : `RM ${discountAmount} off`;
+                this.showToast('DISCOUNT APPLIED', `${item.name} - ${discountText}`, 'warning');
             },
 
             closeDiscountModal() {
@@ -2142,22 +2330,30 @@
                     
                     originalTotal += originalPrice * quantity;
                     
-                    if (item.discountedPrice !== undefined && item.discountedPrice !== item.price) {
+                    const itemHasDiscount = item.discountedPrice !== undefined && item.discountedPrice !== item.price;
+                    
+                    if (itemHasDiscount) {
                         hasDiscount = true;
                         totalDiscount += (originalPrice - currentPrice) * quantity;
                     }
                     
                     for (let i = 0; i < quantity; i++) {
-                        expandedItems.push({
+                        const expandedItem = {
                             id: item.id,
                             name: item.name,
                             price: currentPrice, // Use discounted price if available
-                            originalPrice: originalPrice,
-                            category: item.category,
-                            hasDiscount: item.discountedPrice !== undefined && item.discountedPrice !== item.price,
-                            discountType: item.discountType,
-                            discountAmount: item.discountAmount
-                        });
+                            category: item.category
+                        };
+                        
+                        // Only add discount-related fields if item actually has discount
+                        if (itemHasDiscount) {
+                            expandedItem.originalPrice = originalPrice;
+                            expandedItem.hasDiscount = true;
+                            expandedItem.discountType = item.discountType;
+                            expandedItem.discountAmount = item.discountAmount;
+                        }
+                        
+                        expandedItems.push(expandedItem);
                     }
                 });
 
@@ -2200,8 +2396,10 @@
                     
                     if (sendToKitchen) {
                         await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
+                        this.showToast('PAYMENT RECEIVED', `Order #${order.id.toString().slice(-4)} - RM ${order.total.toFixed(2)} paid`, 'success');
                     } else {
                         await this.showNotification('Payment confirmed!', '✓', 'SUCCESS');
+                        this.showToast('PAYMENT RECEIVED', `RM ${order.total.toFixed(2)} paid successfully`, 'success');
                     }
                 } catch (error) {
                     console.error('Payment error:', error);
@@ -2229,6 +2427,10 @@
                 const orderRef = window.dbPush(window.dbRef(window.db, 'kitchen-orders'));
                 await window.dbSet(orderRef, order);
                 console.log('Order added to kitchen:', order.id);
+                
+                // Show toast notification
+                const orderType = order.orderType === 'preorder' ? 'Preorder' : 'Order';
+                this.showToast('NEW ORDER', `${orderType} #${order.id.toString().slice(-4)} added to kitchen`, 'order');
             },
 
             async updateShiftStats(order) {
@@ -2538,6 +2740,10 @@
                         // Sound removed
                         await this.showNotification('Order marked as picked up!', '✓', 'SUCCESS');
                         console.log('Order picked up and moved to history:', order.id);
+                        
+                        // Show toast notification
+                        const orderType = order.orderType === 'preorder' ? 'Preorder' : 'Order';
+                        this.showToast('ORDER PICKED UP', `${orderType} #${order.id.toString().slice(-4)} collected by customer`, 'info');
                     }
                 } catch (error) {
                     console.error('Error marking order as picked up:', error);
@@ -2624,6 +2830,10 @@
                         
                         // Sound removed
                         console.log('Order completed and moved to pickup:', order.id);
+                        
+                        // Show toast notification
+                        const orderType = order.orderType === 'preorder' ? 'Preorder' : 'Order';
+                        this.showToast('ORDER READY', `${orderType} #${order.id.toString().slice(-4)} ready for pickup`, 'success');
                     }
                 } catch (error) {
                     console.error('Error completing order:', error);
@@ -2877,6 +3087,9 @@
                     
                     this.closePreorderModal();
                     // Sound removed
+                    
+                    // Show toast notification
+                    this.showToast('PREORDER ADDED', `Preorder for ${customer} created successfully`, 'success');
                 } catch (error) {
                     console.error('Error creating preorder:', error);
                     await this.showNotification('Error creating preorder', '⚠️', 'ERROR');
@@ -3237,7 +3450,7 @@
                                     <li>
                                         <span>
                                             ${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}
-                                            ${hasItemDiscount ? `<span style="color: var(--warning); font-size: 11px; margin-left: 5px;">💰</span>` : ''}
+                                            ${hasItemDiscount ? `<span style="color: var(--warning); font-size: 11px; margin-left: 5px; font-weight: 700;">DISC</span>` : ''}
                                         </span>
                                         <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
                                     </li>
@@ -3312,7 +3525,7 @@
                                 </div>
                                 <div style="font-size: 11px; color: var(--text-secondary);">
                                     ${order.displayTime} • ${order.paymentMethod.toUpperCase()} • ${order.orderType === 'preorder' ? 'PREORDER' : 'WALK-IN'}
-                                    ${order.hasDiscount ? ` • 💰 DISCOUNTED` : ''}
+                                    ${order.hasDiscount ? ` • DISCOUNTED` : ''}
                                 </div>
                             </div>
                         `).join('');
