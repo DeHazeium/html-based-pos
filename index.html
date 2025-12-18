@@ -1820,7 +1820,7 @@
                 success: new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ0PVajl8q9fGQc+l9ryz3UmBSR3yPDcjkALFFm06+yiWBIJQ5zf8L90JQQsg8rx2Io2CBhnu+3mn1gPDVGn5O+wYx0GOpHX8sl0JwYidcbw3I9ACxVds+3rpFYVCkeY4PKxaB8FM4nU89N8LQQngsnw2Yw6CRxvwO/jm1EMDkyj5e+vZBoGPJTY8s94KQQkcsfv25FADBVbte3soFgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv1pBCDBRatO3qoVgTCUOZ3vG8cSQEL4PJ8NqLOAkes+3mnlYOEEyh5u+vaR0FO5TX8sJzKQUjdMfv')
             },
 
-            showToast(title, message, type = 'success', duration = 3000) {
+            showToast(title, message, type = 'success', duration = 3000, broadcast = true) {
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
                 toast.className = `toast ${type}`;
@@ -1842,6 +1842,20 @@
                 `;
                 
                 container.appendChild(toast);
+                
+                // Broadcast notification to all devices via Firebase
+                if (broadcast && window.db && window.dbRef && window.dbSet) {
+                    try {
+                        window.dbSet(window.dbRef(window.db, 'notifications'), {
+                            title: title,
+                            message: message,
+                            type: type,
+                            timestamp: Date.now()
+                        });
+                    } catch (error) {
+                        console.error('Error broadcasting notification:', error);
+                    }
+                }
                 
                 // Auto remove after duration
                 setTimeout(() => {
@@ -2325,9 +2339,10 @@
                 const expandedItems = [];
                 this.currentOrder.forEach(item => {
                     const quantity = item.quantity || 1;
-                    const originalPrice = item.price;
+                    const originalPrice = item.price; // This is always the original price from menuItems
                     const currentPrice = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
                     
+                    // Always calculate original total
                     originalTotal += originalPrice * quantity;
                     
                     const itemHasDiscount = item.discountedPrice !== undefined && item.discountedPrice !== item.price;
@@ -2564,6 +2579,26 @@
                             this.renderPreorderList(preorders ? Object.values(preorders) : []);
                         }
                     });
+                    
+                    // Listen for notifications from other devices
+                    const notificationsRef = window.dbRef(window.db, 'notifications');
+                    this.lastNotificationTimestamp = 0; // Track last shown notification
+                    
+                    window.dbOnValue(notificationsRef, (snapshot) => {
+                        if (snapshot.exists()) {
+                            const notification = snapshot.val();
+                            // Only show if notification is new and recent (within last 5 seconds)
+                            const notificationTime = notification.timestamp;
+                            const now = Date.now();
+                            
+                            // Prevent showing the same notification twice
+                            if (notificationTime > this.lastNotificationTimestamp && now - notificationTime < 5000) {
+                                this.lastNotificationTimestamp = notificationTime;
+                                // Show toast without broadcasting (broadcast=false to prevent loop)
+                                this.showToast(notification.title, notification.message, notification.type, 3000, false);
+                            }
+                        }
+                    });
                 } catch (error) {
                     console.error('Error setting up Firebase listeners:', error);
                 }
@@ -2790,10 +2825,14 @@
                             <ul>
                                 ${consolidatedItems.map(item => {
                                     const itemTotal = item.price * item.quantity;
+                                    const hasDiscount = item.hasDiscount || (item.originalPrice && item.originalPrice !== item.price);
+                                    const originalPrice = item.originalPrice || item.price;
+                                    
                                     return `
-                                        <li>
-                                            <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
-                                            <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                        <li style="position: relative;">
+                                            ${hasDiscount ? `<div style="position: absolute; top: -8px; left: 0; font-size: 10px; color: var(--text-secondary); text-decoration: line-through;">RM ${originalPrice.toFixed(2)}</div>` : ''}
+                                            <span style="${hasDiscount ? 'padding-top: 12px;' : ''}">${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''} ${hasDiscount ? '<span style="color: var(--warning); font-size: 11px; margin-left: 5px; font-weight: 700;">DISC</span>' : ''}</span>
+                                            <span style="${hasDiscount ? 'padding-top: 12px; color: var(--warning);' : ''}">RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
                                         </li>
                                     `;
                                 }).join('')}
@@ -2825,8 +2864,13 @@
                             movedToPickup: new Date().toISOString()
                         });
                         
-                        // Remove from kitchen
-                        await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
+                        // Also add to history with status 'pending' so it shows in history immediately
+                        const historyOrder = {
+                            ...order,
+                            status: 'pending', // Mark as pending (awaiting pickup)
+                            movedToPickup: new Date().toISOString()
+                        };
+                        await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), historyOrder);
                         
                         // Sound removed
                         console.log('Order completed and moved to pickup:', order.id);
@@ -3387,17 +3431,26 @@
                         ...order
                     }));
                     
-                    // Separate completed normal orders and preorders
+                    // Separate pending and completed orders, both normal and preorders
+                    const pendingNormal = ordersWithKeys.filter(order => 
+                        order.status === 'pending' && order.movedToPickup && order.orderType !== 'preorder'
+                    ).reverse();
+                    
                     const completedNormal = ordersWithKeys.filter(order => 
                         order.status === 'completed' && order.orderType !== 'preorder'
+                    ).reverse();
+                    
+                    const pendingPreorders = ordersWithKeys.filter(order => 
+                        order.status === 'pending' && order.movedToPickup && order.orderType === 'preorder'
                     ).reverse();
                     
                     const completedPreorders = ordersWithKeys.filter(order => 
                         order.status === 'completed' && order.orderType === 'preorder'
                     ).reverse();
                     
-                    if (completedNormal.length === 0 && completedPreorders.length === 0) {
-                        historyDiv.innerHTML = '<div class="empty-state">No completed orders</div>';
+                    if (pendingNormal.length === 0 && completedNormal.length === 0 && 
+                        pendingPreorders.length === 0 && completedPreorders.length === 0) {
+                        historyDiv.innerHTML = '<div class="empty-state">No order history</div>';
                         return;
                     }
 
@@ -3410,15 +3463,17 @@
                     let html = '';
                     
                     // Normal Orders Section
-                    if (completedNormal.length > 0) {
-                        html += '<div style="margin-bottom: 30px;"><h2 style="font-family: \'Bebas Neue\', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);">NORMAL ORDERS</h2>';
+                    if (pendingNormal.length > 0 || completedNormal.length > 0) {
+                        html += '<div style="margin-bottom: 30px;"><h2 style="font-family: \'Bebas Neue\', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);">WALK-IN ORDERS</h2>';
+                        html += pendingNormal.map(order => this.renderHistoryOrder(order)).join('');
                         html += completedNormal.map(order => this.renderHistoryOrder(order)).join('');
                         html += '</div>';
                     }
                     
                     // Preorders Section
-                    if (completedPreorders.length > 0) {
+                    if (pendingPreorders.length > 0 || completedPreorders.length > 0) {
                         html += '<div><h2 style="font-family: \'Bebas Neue\', sans-serif; font-size: 24px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);">PREORDERS</h2>';
+                        html += pendingPreorders.map(order => this.renderHistoryOrder(order)).join('');
                         html += completedPreorders.map(order => this.renderHistoryOrder(order)).join('');
                         html += '</div>';
                     }
@@ -3435,6 +3490,10 @@
                 
                 const discountBadge = order.hasDiscount ? 
                     `<div style="display: inline-block; background: var(--warning); color: var(--bg-primary); padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; border-radius: 2px; margin-left: 10px;">DISCOUNTED</div>` : '';
+                
+                const statusText = order.status === 'pending' 
+                    ? '<div style="margin-top: 15px; text-align: center; color: var(--warning); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">⏳ AWAITING PICKUP</div>'
+                    : '<div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">✓ COMPLETED</div>';
                 
                 return `
                     <div class="kitchen-order completed">
@@ -3458,9 +3517,7 @@
                             }).join('')}
                         </ul>
                         <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                        <div style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 10px; letter-spacing: 2px; text-transform: uppercase;">
-                            ✓ Completed
-                        </div>
+                        ${statusText}
                     </div>
                 `;
             },
