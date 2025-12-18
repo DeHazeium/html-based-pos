@@ -236,7 +236,6 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             padding: 25px;
-            padding-right: 100px; /* Space for stock badge */
             cursor: pointer;
             transition: all 0.3s ease;
             border-radius: 4px;
@@ -246,9 +245,9 @@
 
         .menu-item-content {
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
             align-items: flex-start;
-            gap: 8px;
+            gap: 20px;
             position: relative;
             z-index: 1;
         }
@@ -285,10 +284,11 @@
             text-align: left;
             margin: 0;
             color: var(--text-primary);
+            flex: 1;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            padding-right: 15px;
             line-height: 1.3;
-            width: 100%;
         }
 
         .price {
@@ -1418,45 +1418,6 @@
         </div>
     </div>
 
-    <!-- Discount Modal -->
-    <div id="discountModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <div class="modal-title">APPLY DISCOUNT</div>
-            </div>
-
-            <div style="padding: 25px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 25px;">
-                <div id="discountItemName" style="font-size: 18px; font-weight: 600; margin-bottom: 15px; color: var(--accent);"></div>
-                <div id="discountOriginalPrice" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;"></div>
-                
-                <div style="display: grid; gap: 15px;">
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Discount Type</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <button id="discountTypePercentage" class="submit-btn" style="background: var(--accent);" onclick="app.setDiscountType('percentage')">PERCENTAGE (%)</button>
-                            <button id="discountTypeFixed" class="submit-btn" style="background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.setDiscountType('fixed')">FIXED (RM)</button>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">Discount Amount</label>
-                        <input type="number" id="discountAmount" placeholder="Enter amount" min="0" style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 15px; color: var(--text-primary); font-size: 16px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
-                    </div>
-                    
-                    <div id="discountPreview" style="padding: 15px; background: var(--bg-primary); border: 1px solid var(--accent); border-radius: 4px; text-align: center;">
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">NEW PRICE</div>
-                        <div id="discountNewPrice" style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent); letter-spacing: 2px;">RM 0.00</div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 12px;">
-                <button class="submit-btn" style="flex: 1; background: var(--bg-tertiary); color: var(--text-primary);" onclick="app.closeDiscountModal()">CANCEL</button>
-                <button class="submit-btn" style="flex: 1; background: var(--accent);" onclick="app.applyDiscount()">APPLY DISCOUNT</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Password Modal -->
     <div id="passwordModal" class="modal">
         <div class="modal-content" style="max-width: 450px;">
@@ -1621,8 +1582,6 @@
             currentPreorderId: null,
             currentPreorderKey: null,
             selectedPreorderPayment: null,
-            currentDiscountItemIndex: null,
-            currentDiscountType: 'percentage',
             passwordResolve: null,
             notificationResolve: null,
             confirmResolve: null,
@@ -1817,12 +1776,9 @@
 
             updateOrderDisplay() {
                 const orderItemsDiv = document.getElementById('orderItems');
-                
-                // Calculate subtotal (with discounts)
                 const subtotal = this.currentOrder.reduce((sum, item) => {
                     const quantity = item.quantity || 1;
-                    const price = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
-                    return sum + (price * quantity);
+                    return sum + (item.price * quantity);
                 }, 0);
 
                 if (this.currentOrder.length === 0) {
@@ -1830,26 +1786,14 @@
                 } else {
                     orderItemsDiv.innerHTML = this.currentOrder.map((item, index) => {
                         const quantity = item.quantity || 1;
-                        const originalPrice = item.price;
-                        const currentPrice = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
-                        const itemTotal = currentPrice * quantity;
-                        const hasDiscount = item.discountedPrice !== undefined && item.discountedPrice !== item.price;
-                        
+                        const itemTotal = item.price * quantity;
                         return `
                             <div class="order-item">
                                 <div class="item-details">
                                     <h4>${item.name} ${quantity > 1 ? `(x${quantity})` : ''}</h4>
-                                    <div class="item-price">
-                                        ${hasDiscount ? `<span style="text-decoration: line-through; color: var(--text-secondary); font-size: 12px;">RM ${originalPrice.toFixed(2)}</span> ` : ''}
-                                        RM ${currentPrice.toFixed(2)} 
-                                        ${quantity > 1 ? `• Total: RM ${itemTotal.toFixed(2)}` : ''}
-                                        ${hasDiscount ? `<span style="color: var(--warning); font-size: 11px; margin-left: 8px;">DISCOUNTED</span>` : ''}
-                                    </div>
+                                    <div class="item-price">RM ${item.price.toFixed(2)} ${quantity > 1 ? `• Total: RM ${itemTotal.toFixed(2)}` : ''}</div>
                                 </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button class="remove-btn" style="background: var(--warning); font-size: 11px; padding: 8px 12px;" onclick="app.openDiscountModal(${index})">💰 DISCOUNT</button>
-                                    <button class="remove-btn" onclick="app.removeFromOrder(${index})">Remove</button>
-                                </div>
+                                <button class="remove-btn" onclick="app.removeFromOrder(${index})">Remove</button>
                             </div>
                         `;
                     }).join('');
@@ -1869,145 +1813,16 @@
                 }
             },
 
-            async openDiscountModal(itemIndex) {
-                // Require admin password
-                const password = await this.showPasswordModal('ADMIN ACCESS REQUIRED', 'Enter admin password to apply discount:');
-                if (password !== this.adminPassword) {
-                    await this.showNotification('Incorrect password. Access denied.', '🔒', 'ACCESS DENIED');
-                    return;
-                }
-
-                const item = this.currentOrder[itemIndex];
-                if (!item) return;
-
-                this.currentDiscountItemIndex = itemIndex;
-                this.currentDiscountType = 'percentage';
-
-                // Update modal
-                document.getElementById('discountItemName').textContent = item.name;
-                const originalPrice = item.price;
-                const quantity = item.quantity || 1;
-                document.getElementById('discountOriginalPrice').textContent = `Original Price: RM ${originalPrice.toFixed(2)} ${quantity > 1 ? `(x${quantity} = RM ${(originalPrice * quantity).toFixed(2)})` : ''}`;
-                
-                // Reset inputs
-                document.getElementById('discountAmount').value = '';
-                document.getElementById('discountNewPrice').textContent = `RM ${originalPrice.toFixed(2)}`;
-                
-                // Set discount type buttons
-                this.setDiscountType('percentage');
-                
-                // Show modal
-                document.getElementById('discountModal').classList.add('active');
-                
-                // Add input listener for preview
-                const input = document.getElementById('discountAmount');
-                input.addEventListener('input', () => this.updateDiscountPreview());
-                
-                this.playSound('click');
-            },
-
-            setDiscountType(type) {
-                this.currentDiscountType = type;
-                
-                const percentageBtn = document.getElementById('discountTypePercentage');
-                const fixedBtn = document.getElementById('discountTypeFixed');
-                
-                if (type === 'percentage') {
-                    percentageBtn.style.background = 'var(--accent)';
-                    percentageBtn.style.color = 'var(--bg-primary)';
-                    fixedBtn.style.background = 'var(--bg-tertiary)';
-                    fixedBtn.style.color = 'var(--text-primary)';
-                    document.getElementById('discountAmount').placeholder = 'Enter percentage (e.g., 10)';
-                } else {
-                    fixedBtn.style.background = 'var(--accent)';
-                    fixedBtn.style.color = 'var(--bg-primary)';
-                    percentageBtn.style.background = 'var(--bg-tertiary)';
-                    percentageBtn.style.color = 'var(--text-primary)';
-                    document.getElementById('discountAmount').placeholder = 'Enter amount (e.g., 5.00)';
-                }
-                
-                this.updateDiscountPreview();
-                this.playSound('click');
-            },
-
-            updateDiscountPreview() {
-                const item = this.currentOrder[this.currentDiscountItemIndex];
-                if (!item) return;
-
-                const originalPrice = item.price;
-                const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
-                
-                let newPrice = originalPrice;
-                
-                if (this.currentDiscountType === 'percentage') {
-                    const discount = (originalPrice * discountAmount) / 100;
-                    newPrice = originalPrice - discount;
-                } else {
-                    newPrice = originalPrice - discountAmount;
-                }
-                
-                // Ensure price doesn't go negative
-                newPrice = Math.max(0, newPrice);
-                
-                document.getElementById('discountNewPrice').textContent = `RM ${newPrice.toFixed(2)}`;
-            },
-
-            async applyDiscount() {
-                const item = this.currentOrder[this.currentDiscountItemIndex];
-                if (!item) return;
-
-                const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
-                
-                if (discountAmount <= 0) {
-                    await this.showNotification('Please enter a valid discount amount', 'ℹ️');
-                    return;
-                }
-
-                const originalPrice = item.price;
-                let newPrice = originalPrice;
-                
-                if (this.currentDiscountType === 'percentage') {
-                    if (discountAmount > 100) {
-                        await this.showNotification('Percentage cannot exceed 100%', '⚠️', 'ERROR');
-                        return;
-                    }
-                    const discount = (originalPrice * discountAmount) / 100;
-                    newPrice = originalPrice - discount;
-                } else {
-                    if (discountAmount > originalPrice) {
-                        await this.showNotification('Discount cannot exceed item price', '⚠️', 'ERROR');
-                        return;
-                    }
-                    newPrice = originalPrice - discountAmount;
-                }
-                
-                // Apply discount
-                item.discountedPrice = newPrice;
-                item.discountType = this.currentDiscountType;
-                item.discountAmount = discountAmount;
-                
-                this.updateOrderDisplay();
-                this.closeDiscountModal();
-                this.playSound('success');
-                await this.showNotification('Discount applied successfully!', '✓', 'SUCCESS');
-            },
-
-            closeDiscountModal() {
-                document.getElementById('discountModal').classList.remove('active');
-                this.playSound('click');
-            },
-
             async processPayment(method) {
                 if (this.currentOrder.length === 0) {
                     await this.showNotification('Please add items to order', 'ℹ️');
                     return;
                 }
 
-                // Calculate total with quantities and discounts
+                // Calculate total with quantities
                 const total = this.currentOrder.reduce((sum, item) => {
                     const quantity = item.quantity || 1;
-                    const price = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
-                    return sum + (price * quantity);
+                    return sum + (item.price * quantity);
                 }, 0);
                 
                 this.currentPaymentMethod = method;
@@ -2092,35 +1907,16 @@
                 // Ask if order should be sent to kitchen
                 const sendToKitchen = await this.showConfirm('Send this order to kitchen?');
                 
-                // Calculate original total and discount amount
-                let originalTotal = 0;
-                let totalDiscount = 0;
-                let hasDiscount = false;
-                
                 // Expand items with quantities into separate items for kitchen
                 const expandedItems = [];
                 this.currentOrder.forEach(item => {
                     const quantity = item.quantity || 1;
-                    const originalPrice = item.price;
-                    const currentPrice = item.discountedPrice !== undefined ? item.discountedPrice : item.price;
-                    
-                    originalTotal += originalPrice * quantity;
-                    
-                    if (item.discountedPrice !== undefined && item.discountedPrice !== item.price) {
-                        hasDiscount = true;
-                        totalDiscount += (originalPrice - currentPrice) * quantity;
-                    }
-                    
                     for (let i = 0; i < quantity; i++) {
                         expandedItems.push({
                             id: item.id,
                             name: item.name,
-                            price: currentPrice, // Use discounted price if available
-                            originalPrice: originalPrice,
-                            category: item.category,
-                            hasDiscount: item.discountedPrice !== undefined && item.discountedPrice !== item.price,
-                            discountType: item.discountType,
-                            discountAmount: item.discountAmount
+                            price: item.price,
+                            category: item.category
                         });
                     }
                 });
@@ -2129,9 +1925,6 @@
                     id: Date.now(),
                     items: expandedItems,
                     total: this.currentPaymentTotal,
-                    originalTotal: hasDiscount ? originalTotal : undefined,
-                    totalDiscount: hasDiscount ? totalDiscount : undefined,
-                    hasDiscount: hasDiscount,
                     paymentMethod: this.currentPaymentMethod,
                     customerName: customerName || null,
                     timestamp: new Date().toISOString(),
@@ -2210,31 +2003,12 @@
                         totalSales: 0,
                         orderCount: 0,
                         paymentMethods: { cash: 0, card: 0, ewallet: 0, preorder: 0 },
-                        itemsSold: {},
-                        totalDiscounts: 0,
-                        discountedOrders: 0,
-                        orderTypes: { normal: 0, preorder: 0 }
+                        itemsSold: {}
                     };
 
                     // Update totals
                     shiftData.totalSales = (shiftData.totalSales || 0) + order.total;
                     shiftData.orderCount = (shiftData.orderCount || 0) + 1;
-                    
-                    // Track discounts
-                    if (order.hasDiscount) {
-                        shiftData.totalDiscounts = (shiftData.totalDiscounts || 0) + (order.totalDiscount || 0);
-                        shiftData.discountedOrders = (shiftData.discountedOrders || 0) + 1;
-                    }
-                    
-                    // Track order types
-                    if (!shiftData.orderTypes) {
-                        shiftData.orderTypes = { normal: 0, preorder: 0 };
-                    }
-                    if (order.orderType === 'preorder') {
-                        shiftData.orderTypes.preorder = (shiftData.orderTypes.preorder || 0) + 1;
-                    } else {
-                        shiftData.orderTypes.normal = (shiftData.orderTypes.normal || 0) + 1;
-                    }
                     
                     // Update payment methods
                     if (!shiftData.paymentMethods) {
@@ -2259,8 +2033,7 @@
                     await window.dbSet(shiftRef, shiftData);
                     console.log('✓ Shift stats updated:', {
                         totalSales: shiftData.totalSales,
-                        orderCount: shiftData.orderCount,
-                        discounts: shiftData.totalDiscounts
+                        orderCount: shiftData.orderCount
                     });
                 } catch (error) {
                     console.error('Error updating shift stats:', error);
@@ -3184,25 +2957,17 @@
                 // Consolidate items
                 const consolidatedItems = this.consolidateItems(order.items);
                 
-                const discountBadge = order.hasDiscount ? 
-                    `<div style="display: inline-block; background: var(--warning); color: var(--bg-primary); padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; border-radius: 2px; margin-left: 10px;">DISCOUNTED</div>` : '';
-                
                 return `
                     <div class="kitchen-order completed">
-                        <h3>Order #${order.id} ${discountBadge}</h3>
+                        <h3>Order #${order.id}</h3>
                         <div class="order-time">${order.displayTime} • ${order.paymentMethod.toUpperCase()}</div>
                         ${order.customerName ? `<div class="order-time">Customer: ${order.customerName}</div>` : ''}
-                        ${order.hasDiscount ? `<div class="order-time" style="color: var(--warning);">Original: RM ${order.originalTotal.toFixed(2)} | Discount: -RM ${order.totalDiscount.toFixed(2)}</div>` : ''}
                         <ul>
                             ${consolidatedItems.map(item => {
                                 const itemTotal = item.price * item.quantity;
-                                const hasItemDiscount = item.hasDiscount || (item.originalPrice && item.originalPrice !== item.price);
                                 return `
                                     <li>
-                                        <span>
-                                            ${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}
-                                            ${hasItemDiscount ? `<span style="color: var(--warning); font-size: 11px; margin-left: 5px;">💰</span>` : ''}
-                                        </span>
+                                        <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
                                         <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
                                     </li>
                                 `;
@@ -3225,21 +2990,13 @@
                     }
 
                     const shift = snapshot.val();
-                    
-                    // Get completed orders from history
-                    const ordersSnapshot = await window.dbGet(window.dbRef(window.db, 'kitchen-orders'));
-                    let completedOrders = [];
-                    if (ordersSnapshot.exists()) {
-                        completedOrders = Object.values(ordersSnapshot.val()).filter(o => o.status === 'completed');
-                    }
-                    
                     const reportContent = document.getElementById('shiftReportContent');
 
                     // Handle empty itemsSold
                     let itemsHtml = '';
                     if (shift.itemsSold && Object.keys(shift.itemsSold).length > 0) {
                         itemsHtml = Object.entries(shift.itemsSold)
-                            .sort((a, b) => b[1].revenue - a[1].revenue)
+                            .sort((a, b) => b[1].count - a[1].count)
                             .map(([name, data]) => `
                                 <div class="sold-item">
                                     <span>${name}</span>
@@ -3250,111 +3007,37 @@
                         itemsHtml = '<div class="empty-state">No items sold yet</div>';
                     }
 
-                    // Calculate totals
+                    // Calculate total from all payment methods
                     const totalCash = shift.paymentMethods?.cash || 0;
                     const totalCard = shift.paymentMethods?.card || 0;
                     const totalEwallet = shift.paymentMethods?.ewallet || 0;
-                    const totalDiscounts = shift.totalDiscounts || 0;
-                    const discountedOrders = shift.discountedOrders || 0;
-                    const normalOrders = shift.orderTypes?.normal || 0;
-                    const preorders = shift.orderTypes?.preorder || 0;
-                    
-                    // Format shift start time
-                    const startTime = new Date(shift.startTime);
-                    const duration = Math.floor((Date.now() - startTime.getTime()) / (1000 * 60)); // minutes
-                    const hours = Math.floor(duration / 60);
-                    const minutes = duration % 60;
-                    
-                    // Completed orders summary
-                    let ordersHtml = '';
-                    if (completedOrders.length > 0) {
-                        ordersHtml = completedOrders.slice(-10).reverse().map(order => `
-                            <div style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; margin-bottom: 8px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <span style="font-weight: 600;">#${order.id.toString().slice(-4)}</span>
-                                    <span style="color: var(--accent);">RM ${order.total.toFixed(2)}</span>
-                                </div>
-                                <div style="font-size: 11px; color: var(--text-secondary);">
-                                    ${order.displayTime} • ${order.paymentMethod.toUpperCase()} • ${order.orderType === 'preorder' ? 'PREORDER' : 'WALK-IN'}
-                                    ${order.hasDiscount ? ` • 💰 DISCOUNTED` : ''}
-                                </div>
-                            </div>
-                        `).join('');
-                    } else {
-                        ordersHtml = '<div class="empty-state">No completed orders yet</div>';
-                    }
 
                     reportContent.innerHTML = `
-                        <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 4px; margin-bottom: 20px; border: 1px solid var(--border);">
-                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Shift Duration</div>
-                            <div style="font-size: 20px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">${hours}h ${minutes}m</div>
-                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Started: ${startTime.toLocaleString('en-MY')}</div>
-                        </div>
-                        
                         <div class="report-grid">
-                            <div class="report-stat" style="grid-column: span 2;">
+                            <div class="report-stat">
                                 <div class="stat-label">Total Sales</div>
-                                <div class="stat-value" style="font-size: 32px;">RM ${(shift.totalSales || 0).toFixed(2)}</div>
+                                <div class="stat-value">RM ${(shift.totalSales || 0).toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
-                                <div class="stat-label">Total Orders</div>
+                                <div class="stat-label">Orders</div>
                                 <div class="stat-value">${shift.orderCount || 0}</div>
                             </div>
                             <div class="report-stat">
-                                <div class="stat-label">Avg Order</div>
-                                <div class="stat-value">RM ${shift.orderCount > 0 ? (shift.totalSales / shift.orderCount).toFixed(2) : '0.00'}</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--border);">
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">WALK-IN ORDERS</div>
-                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${normalOrders}</div>
-                            </div>
-                            <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 4px; border: 1px solid var(--border);">
-                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">PREORDERS</div>
-                                <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; color: var(--accent);">${preorders}</div>
-                            </div>
-                        </div>
-                        
-                        ${totalDiscounts > 0 ? `
-                        <div style="background: var(--warning); color: var(--bg-primary); padding: 15px; border-radius: 4px; margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px;">TOTAL DISCOUNTS GIVEN</div>
-                                    <div style="font-size: 24px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px;">RM ${totalDiscounts.toFixed(2)}</div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-size: 20px; font-family: 'Bebas Neue', sans-serif;">${discountedOrders}</div>
-                                    <div style="font-size: 11px; opacity: 0.9;">Orders</div>
-                                </div>
-                            </div>
-                        </div>
-                        ` : ''}
-                        
-                        <div class="report-grid" style="margin-bottom: 20px;">
-                            <div class="report-stat">
-                                <div class="stat-label">💵 Cash</div>
+                                <div class="stat-label">Cash</div>
                                 <div class="stat-value">RM ${totalCash.toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
-                                <div class="stat-label">💳 Card</div>
+                                <div class="stat-label">Card</div>
                                 <div class="stat-value">RM ${totalCard.toFixed(2)}</div>
                             </div>
                             <div class="report-stat">
-                                <div class="stat-label">📱 E-Wallet</div>
+                                <div class="stat-label">E-Wallet</div>
                                 <div class="stat-value">RM ${totalEwallet.toFixed(2)}</div>
                             </div>
                         </div>
-                        
-                        <div class="items-sold-list" style="margin-bottom: 20px;">
-                            <h4>Top Items Sold (by revenue)</h4>
+                        <div class="items-sold-list">
+                            <h4>Items Sold</h4>
                             ${itemsHtml}
-                        </div>
-                        
-                        <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 4px; border: 1px solid var(--border);">
-                            <h4 style="margin-bottom: 15px;">Recent Completed Orders (Last 10)</h4>
-                            ${ordersHtml}
                         </div>
                     `;
 
@@ -3379,52 +3062,17 @@
                     return;
                 }
 
-                const confirmed = await this.showConfirm('Clear current shift? This will save the current shift report and reset all statistics.');
+                const confirmed = await this.showConfirm('Clear current shift? This will reset all statistics and order history.');
                 if (!confirmed) return;
                 
                 try {
-                    // Save current shift before clearing
-                    const shiftSnapshot = await window.dbGet(window.dbRef(window.db, 'current-shift'));
-                    if (shiftSnapshot.exists()) {
-                        const shift = shiftSnapshot.val();
-                        
-                        // Get completed orders for the report
-                        const ordersSnapshot = await window.dbGet(window.dbRef(window.db, 'kitchen-orders'));
-                        let completedOrders = [];
-                        if (ordersSnapshot.exists()) {
-                            completedOrders = Object.values(ordersSnapshot.val()).filter(o => o.status === 'completed');
-                        }
-                        
-                        const savedShift = {
-                            ...shift,
-                            completedOrders: completedOrders,
-                            endTime: new Date().toISOString(),
-                            savedAt: new Date().toLocaleString('en-MY', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true
-                            })
-                        };
-                        
-                        // Save to shift-history
-                        const historyRef = window.dbRef(window.db, 'shift-history');
-                        await window.dbSet(window.dbPush(historyRef), savedShift);
-                        console.log('✓ Shift saved to history');
-                    }
-                    
                     // Reset shift data
                     await window.dbSet(window.dbRef(window.db, 'current-shift'), {
                         startTime: new Date().toISOString(),
                         totalSales: 0,
                         orderCount: 0,
                         paymentMethods: { cash: 0, card: 0, ewallet: 0, preorder: 0 },
-                        itemsSold: {},
-                        totalDiscounts: 0,
-                        discountedOrders: 0,
-                        orderTypes: { normal: 0, preorder: 0 }
+                        itemsSold: {}
                     });
                     
                     // Clear all kitchen orders (history)
@@ -3432,7 +3080,7 @@
                     
                     this.closeShiftReport();
                     this.playSound('success');
-                    await this.showNotification('Shift saved and cleared successfully!', '✓', 'SUCCESS');
+                    await this.showNotification('Shift and order history cleared successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error clearing shift:', error);
                     await this.showNotification('Error clearing shift', '⚠️', 'ERROR');
