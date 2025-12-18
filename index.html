@@ -228,7 +228,7 @@
 
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 15px;
         }
 
@@ -236,9 +236,9 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             padding: 25px;
-            padding-right: 100px; /* Space for stock badge */
+            padding-right: 120px; /* More space for stock badge */
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 4px;
             position: relative;
             overflow: hidden;
@@ -591,7 +591,7 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -611,7 +611,7 @@
             background: var(--accent);
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            transition: width 0.5s ease, height 0.5s ease;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .action-btn:hover::before {
@@ -623,6 +623,11 @@
             border-color: var(--accent);
             color: var(--bg-primary);
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0px);
         }
 
         .action-btn span {
@@ -650,16 +655,39 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             padding: 20px;
+            transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .modal.active {
             display: flex;
+            background: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                background: rgba(0, 0, 0, 0);
+            }
+            to {
+                background: rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
         .modal-content {
@@ -670,6 +698,7 @@
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
+            animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .modal-header {
@@ -1713,7 +1742,7 @@
                 if (this.pin.length < 4) {
                     this.pin += digit;
                     document.getElementById('pinDisplay').textContent = '•'.repeat(this.pin.length);
-                    this.playSound('click');
+                    // Sound removed
                 }
             },
 
@@ -1721,18 +1750,18 @@
                 this.pin = '';
                 document.getElementById('pinDisplay').textContent = '';
                 document.getElementById('pinDisplay').classList.remove('error');
-                this.playSound('click');
+                // Sound removed
             },
 
             checkPin() {
                 if (this.pin === this.correctPin) {
-                    this.playSound('success');
+                    // Sound removed
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('mainApp').classList.remove('hidden');
                     this.clearPin();
                 } else {
                     document.getElementById('pinDisplay').classList.add('error');
-                    this.playSound('click');
+                    // Sound removed
                     setTimeout(() => {
                         this.clearPin();
                     }, 500);
@@ -1788,7 +1817,7 @@
                 event.target.classList.add('active');
                 
                 this.renderMenu();
-                this.playSound('click');
+                // Sound removed
             },
 
             addToOrder(itemId) {
@@ -1813,13 +1842,13 @@
                 }
                 
                 this.updateOrderDisplay();
-                this.playSound('order');
+                // Sound removed
             },
 
             removeFromOrder(index) {
                 this.currentOrder.splice(index, 1);
                 this.updateOrderDisplay();
-                this.playSound('click');
+                // Sound removed
             },
 
             updateOrderDisplay() {
@@ -1872,7 +1901,7 @@
                 if (confirmed) {
                     this.currentOrder = [];
                     this.updateOrderDisplay();
-                    this.playSound('click');
+                    // Sound removed
                 }
             },
 
@@ -1910,7 +1939,7 @@
                 const input = document.getElementById('discountAmount');
                 input.addEventListener('input', () => this.updateDiscountPreview());
                 
-                this.playSound('click');
+                // Sound removed
             },
 
             setDiscountType(type) {
@@ -1934,7 +1963,7 @@
                 }
                 
                 this.updateDiscountPreview();
-                this.playSound('click');
+                // Sound removed
             },
 
             updateDiscountPreview() {
@@ -1995,13 +2024,13 @@
                 
                 this.updateOrderDisplay();
                 this.closeDiscountModal();
-                this.playSound('success');
+                // Sound removed
                 await this.showNotification('Discount applied successfully!', '✓', 'SUCCESS');
             },
 
             closeDiscountModal() {
                 document.getElementById('discountModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             async processPayment(method) {
@@ -2050,7 +2079,7 @@
                 }
 
                 document.getElementById('paymentModal').classList.add('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             calculateChange() {
@@ -2167,7 +2196,7 @@
                     
                     this.currentOrder = [];
                     this.updateOrderDisplay();
-                    this.playSound('success');
+                    // Sound removed
                     
                     if (sendToKitchen) {
                         await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
@@ -2189,7 +2218,7 @@
                 document.getElementById('cashReceived').value = '';
                 document.getElementById('changeSection').style.display = 'none';
                 document.getElementById('insufficientWarning').style.display = 'none';
-                this.playSound('click');
+                // Sound removed
             },
 
             async addOrderToKitchen(order) {
@@ -2381,7 +2410,7 @@
                     this.renderHistory();
                 }
 
-                this.playSound('click');
+                // Sound removed
             },
 
             async loadKitchenOrders() {
@@ -2506,7 +2535,7 @@
                         // Remove from pickup
                         await window.dbSet(window.dbRef(window.db, `pickup-orders/${firebaseKey}`), null);
                         
-                        this.playSound('success');
+                        // Sound removed
                         await this.showNotification('Order marked as picked up!', '✓', 'SUCCESS');
                         console.log('Order picked up and moved to history:', order.id);
                     }
@@ -2593,7 +2622,7 @@
                         // Remove from kitchen
                         await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
                         
-                        this.playSound('success');
+                        // Sound removed
                         console.log('Order completed and moved to pickup:', order.id);
                     }
                 } catch (error) {
@@ -2667,7 +2696,7 @@
                     // Delete the order from kitchen-orders
                     await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
                     
-                    this.playSound('success');
+                    // Sound removed
                     await this.showNotification('Order deleted and statistics updated successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error deleting order:', error);
@@ -2723,12 +2752,12 @@
                 }).join('');
                 
                 document.getElementById('preorderModal').classList.add('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             closePreorderModal() {
                 document.getElementById('preorderModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             addToPreorder(itemId) {
@@ -2760,7 +2789,7 @@
                 
                 // Update selected items display
                 this.updatePreorderItemsList();
-                this.playSound('order');
+                // Sound removed
             },
 
             updatePreorderItemsList() {
@@ -2794,7 +2823,7 @@
                 }, 0);
                 document.getElementById('preorderTotal').textContent = total.toFixed(2);
                 this.updatePreorderItemsList();
-                this.playSound('click');
+                // Sound removed
             },
 
             async createPreorder() {
@@ -2847,7 +2876,7 @@
                     await window.dbSet(preorderRef, preorder);
                     
                     this.closePreorderModal();
-                    this.playSound('success');
+                    // Sound removed
                 } catch (error) {
                     console.error('Error creating preorder:', error);
                     await this.showNotification('Error creating preorder', '⚠️', 'ERROR');
@@ -2924,7 +2953,7 @@
                                 document.getElementById('confirmPreorderPaymentBtn').style.pointerEvents = 'none';
                                 
                                 document.getElementById('preorderPaymentModal').classList.add('active');
-                                this.playSound('click');
+                                // Sound removed
                                 break;
                             }
                         }
@@ -2947,7 +2976,7 @@
                 document.getElementById('confirmPreorderPaymentBtn').style.opacity = '1';
                 document.getElementById('confirmPreorderPaymentBtn').style.pointerEvents = 'auto';
                 
-                this.playSound('click');
+                // Sound removed
             },
 
             async finalizePreorderPayment() {
@@ -2958,7 +2987,7 @@
                     await window.dbSet(window.dbRef(window.db, `preorders/${this.currentPreorderKey}/paymentMethod`), this.selectedPreorderPayment);
                     
                     this.closePreorderPaymentModal();
-                    this.playSound('success');
+                    // Sound removed
                     await this.showNotification('Payment confirmed!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error finalizing payment:', error);
@@ -2969,7 +2998,7 @@
             closePreorderPaymentModal() {
                 document.getElementById('preorderPaymentModal').classList.remove('active');
                 this.selectedPreorderPayment = null;
-                this.playSound('click');
+                // Sound removed
             },
 
             // Password Modal Functions
@@ -2981,7 +3010,7 @@
                     document.getElementById('passwordInput').value = '';
                     document.getElementById('passwordModal').classList.add('active');
                     setTimeout(() => document.getElementById('passwordInput').focus(), 100);
-                    this.playSound('click');
+                    // Sound removed
                 });
             },
 
@@ -2992,7 +3021,7 @@
                     this.passwordResolve(password);
                     this.passwordResolve = null;
                 }
-                this.playSound('click');
+                // Sound removed
             },
 
             cancelPassword() {
@@ -3001,7 +3030,7 @@
                     this.passwordResolve(null);
                     this.passwordResolve = null;
                 }
-                this.playSound('click');
+                // Sound removed
             },
 
             // Notification Modal Functions
@@ -3012,7 +3041,7 @@
                     document.getElementById('notificationMessage').textContent = message;
                     document.getElementById('notificationIcon').textContent = icon;
                     document.getElementById('notificationModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 });
             },
 
@@ -3022,7 +3051,7 @@
                     this.notificationResolve();
                     this.notificationResolve = null;
                 }
-                this.playSound('click');
+                // Sound removed
             },
 
             // Confirm Modal Functions
@@ -3031,7 +3060,7 @@
                     this.confirmResolve = resolve;
                     document.getElementById('confirmMessage').textContent = message;
                     document.getElementById('confirmModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 });
             },
 
@@ -3041,7 +3070,7 @@
                     this.confirmResolve(true);
                     this.confirmResolve = null;
                 }
-                this.playSound('click');
+                // Sound removed
             },
 
             cancelConfirm() {
@@ -3050,7 +3079,7 @@
                     this.confirmResolve(false);
                     this.confirmResolve = null;
                 }
-                this.playSound('click');
+                // Sound removed
             },
 
             async sendToKitchen(preorderId) {
@@ -3094,7 +3123,7 @@
                                 // Remove from preorders (it's now in kitchen)
                                 await window.dbSet(window.dbRef(window.db, `preorders/${key}`), null);
                                 
-                                this.playSound('success');
+                                // Sound removed
                                 await this.showNotification('Order sent to kitchen!', '✓', 'SUCCESS');
                                 break;
                             }
@@ -3117,7 +3146,7 @@
                         for (let key in preorders) {
                             if (preorders[key].id === preorderId) {
                                 await window.dbRemove(window.dbRef(window.db, `preorders/${key}`));
-                                this.playSound('click');
+                                // Sound removed
                                 break;
                             }
                         }
@@ -3366,7 +3395,7 @@
                     `;
 
                     document.getElementById('shiftReportModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 } catch (error) {
                     console.error('Error opening shift report:', error);
                     await this.showNotification('Error loading shift report: ' + error.message, '⚠️', 'ERROR');
@@ -3375,7 +3404,7 @@
 
             closeShiftReport() {
                 document.getElementById('shiftReportModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             async clearShift() {
@@ -3438,7 +3467,7 @@
                     await window.dbSet(window.dbRef(window.db, 'kitchen-orders'), null);
                     
                     this.closeShiftReport();
-                    this.playSound('success');
+                    // Sound removed
                     await this.showNotification('Shift saved and cleared successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error clearing shift:', error);
@@ -3471,7 +3500,7 @@
                     const historyRef = window.dbPush(window.dbRef(window.db, 'shift-history'));
                     await window.dbSet(historyRef, savedShift);
                     
-                    this.playSound('success');
+                    // Sound removed
                     await this.showNotification('Shift report saved successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error saving shift:', error);
@@ -3504,7 +3533,7 @@
                     }
 
                     document.getElementById('shiftHistoryModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 } catch (error) {
                     console.error('Error loading shift history:', error);
                     await this.showNotification('Error loading shift history', '⚠️', 'ERROR');
@@ -3567,7 +3596,7 @@
 
                     document.getElementById('shiftHistoryModal').classList.remove('active');
                     document.getElementById('shiftReportModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 } catch (error) {
                     console.error('Error viewing shift details:', error);
                 }
@@ -3575,7 +3604,7 @@
 
             closeShiftHistory() {
                 document.getElementById('shiftHistoryModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             async openAdminEdit() {
@@ -3629,7 +3658,7 @@
                     }
 
                     document.getElementById('adminEditModal').classList.add('active');
-                    this.playSound('click');
+                    // Sound removed
                 } catch (error) {
                     console.error('Error opening admin edit:', error);
                     await this.showNotification('Error loading shift data', '⚠️', 'ERROR');
@@ -3638,7 +3667,7 @@
 
             closeAdminEdit() {
                 document.getElementById('adminEditModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             async saveAdminEdit() {
@@ -3687,7 +3716,7 @@
                     
                     this.closeAdminEdit();
                     this.closeShiftReport();
-                    this.playSound('success');
+                    // Sound removed
                     await this.showNotification('Shift data updated successfully!', '✓', 'SUCCESS');
                 } catch (error) {
                     console.error('Error saving admin edit:', error);
@@ -3704,12 +3733,12 @@
                 
                 this.renderStockList();
                 document.getElementById('stockManagerModal').classList.add('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             closeStockManager() {
                 document.getElementById('stockManagerModal').classList.remove('active');
-                this.playSound('click');
+                // Sound removed
             },
 
             toggleStock() {
@@ -3717,7 +3746,7 @@
                 this.updateStockStatusText();
                 this.renderStockList(); // Re-render to update badges
                 this.renderMenu(); // Refresh menu
-                this.playSound('click');
+                // Sound removed
             },
 
             updateStockStatusText() {
@@ -3763,7 +3792,7 @@
                 if (item) {
                     item.inStock = !item.inStock;
                     this.renderStockList();
-                    this.playSound('click');
+                    // Sound removed
                 }
             },
 
@@ -3771,7 +3800,7 @@
                 await this.saveStockStatus(); // Save to Firebase
                 this.renderMenu(); // Refresh menu display
                 this.closeStockManager();
-                this.playSound('success');
+                // Sound removed
                 await this.showNotification('Stock status updated successfully!', '✓', 'SUCCESS');
             },
 
