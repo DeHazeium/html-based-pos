@@ -1653,9 +1653,24 @@
             },
 
             async init() {
-                await this.loadStockStatus();
-                await this.loadMenuImages();
-                await this.loadLogos();
+                try {
+                    await this.loadStockStatus();
+                } catch (e) {
+                    console.log('Could not load stock status:', e.message);
+                }
+                
+                try {
+                    await this.loadMenuImages();
+                } catch (e) {
+                    console.log('Could not load menu images:', e.message);
+                }
+                
+                try {
+                    await this.loadLogos();
+                } catch (e) {
+                    console.log('Could not load logos:', e.message);
+                }
+                
                 this.renderMenu();
                 this.setupFirebaseListeners();
                 this.initializeShift();
@@ -2000,6 +2015,9 @@
                 // Get customer name
                 const customerName = document.getElementById('posCustomerName').value.trim();
 
+                // Close payment modal first
+                this.closePaymentModal();
+
                 // Ask if order should be sent to kitchen
                 const sendToKitchen = await this.showConfirm('Send this order to kitchen?');
                 
@@ -2037,25 +2055,24 @@
 
                 try {
                     if (sendToKitchen) {
-                        await this.addOrderToKitchen(order);
+                        if (window.db && window.dbRef && window.dbSet) {
+                            await this.addOrderToKitchen(order);
+                        }
+                    }
+                    
+                    // Always update shift stats
+                    if (window.db && window.dbRef && window.dbSet) {
                         await this.updateShiftStats(order);
-                        
-                        this.currentOrder = [];
-                        this.updateOrderDisplay();
-                        this.closePaymentModal();
-                        this.playSound('success');
-                        
+                    }
+                    
+                    this.currentOrder = [];
+                    this.updateOrderDisplay();
+                    this.playSound('success');
+                    
+                    if (sendToKitchen) {
                         await this.showNotification('Payment confirmed!\nOrder sent to kitchen.', '✓', 'SUCCESS');
                     } else {
-                        // Just update stats and clear order without sending to kitchen
-                        await this.updateShiftStats(order);
-                        
-                        this.currentOrder = [];
-                        this.updateOrderDisplay();
-                        this.closePaymentModal();
-                        this.playSound('success');
-                        
-                        await this.showNotification('Payment confirmed!\nOrder not sent to kitchen.', '✓', 'SUCCESS');
+                        await this.showNotification('Payment confirmed!', '✓', 'SUCCESS');
                     }
                 } catch (error) {
                     console.error('Payment error:', error);
@@ -2076,11 +2093,21 @@
             },
 
             async addOrderToKitchen(order) {
+                if (!window.db || !window.dbRef || !window.dbPush || !window.dbSet) {
+                    console.error('Firebase not available');
+                    throw new Error('Database not available');
+                }
                 const orderRef = window.dbPush(window.dbRef(window.db, 'kitchen-orders'));
                 await window.dbSet(orderRef, order);
+                console.log('Order added to kitchen:', order.id);
             },
 
             async updateShiftStats(order) {
+                if (!window.db || !window.dbRef || !window.dbGet || !window.dbSet) {
+                    console.log('Firebase not available, skipping shift stats update');
+                    return;
+                }
+                
                 try {
                     const shiftRef = window.dbRef(window.db, 'current-shift');
                     const snapshot = await window.dbGet(shiftRef);
@@ -2118,7 +2145,10 @@
                     });
 
                     await window.dbSet(shiftRef, shiftData);
-                    console.log('Shift stats updated successfully:', shiftData);
+                    console.log('✓ Shift stats updated:', {
+                        totalSales: shiftData.totalSales,
+                        orderCount: shiftData.orderCount
+                    });
                 } catch (error) {
                     console.error('Error updating shift stats:', error);
                     // Silent fail - don't interrupt order flow
@@ -2126,6 +2156,11 @@
             },
 
             async initializeShift() {
+                if (!window.db || !window.dbRef || !window.dbGet || !window.dbSet) {
+                    console.log('Firebase not available, skipping shift initialization');
+                    return;
+                }
+                
                 try {
                     const shiftRef = window.dbRef(window.db, 'current-shift');
                     const snapshot = await window.dbGet(shiftRef);
@@ -2145,33 +2180,42 @@
             },
 
             setupFirebaseListeners() {
-                const ordersRef = window.dbRef(window.db, 'kitchen-orders');
-                window.dbOnValue(ordersRef, (snapshot) => {
-                    if (this.currentMode === 'kitchen') {
-                        this.renderKitchenOrders(snapshot.val());
-                    } else if (this.currentMode === 'history') {
-                        this.renderHistory();
-                    }
-                    this.updateSyncStatus(true);
-                }, (error) => {
-                    console.error('Firebase listener error:', error);
-                    this.updateSyncStatus(false);
-                });
+                if (!window.db || !window.dbRef || !window.dbOnValue) {
+                    console.log('Firebase not available, skipping listeners');
+                    return;
+                }
+                
+                try {
+                    const ordersRef = window.dbRef(window.db, 'kitchen-orders');
+                    window.dbOnValue(ordersRef, (snapshot) => {
+                        if (this.currentMode === 'kitchen') {
+                            this.renderKitchenOrders(snapshot.val());
+                        } else if (this.currentMode === 'history') {
+                            this.renderHistory();
+                        }
+                        this.updateSyncStatus(true);
+                    }, (error) => {
+                        console.error('Firebase listener error:', error);
+                        this.updateSyncStatus(false);
+                    });
 
-                const pickupRef = window.dbRef(window.db, 'pickup-orders');
-                window.dbOnValue(pickupRef, (snapshot) => {
-                    if (this.currentMode === 'pickup') {
-                        this.renderPickupOrders(snapshot.val());
-                    }
-                });
+                    const pickupRef = window.dbRef(window.db, 'pickup-orders');
+                    window.dbOnValue(pickupRef, (snapshot) => {
+                        if (this.currentMode === 'pickup') {
+                            this.renderPickupOrders(snapshot.val());
+                        }
+                    });
 
-                const preordersRef = window.dbRef(window.db, 'preorders');
-                window.dbOnValue(preordersRef, (snapshot) => {
-                    if (this.currentMode === 'preorder') {
-                        const preorders = snapshot.val();
-                        this.renderPreorderList(preorders ? Object.values(preorders) : []);
-                    }
-                });
+                    const preordersRef = window.dbRef(window.db, 'preorders');
+                    window.dbOnValue(preordersRef, (snapshot) => {
+                        if (this.currentMode === 'preorder') {
+                            const preorders = snapshot.val();
+                            this.renderPreorderList(preorders ? Object.values(preorders) : []);
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error setting up Firebase listeners:', error);
+                }
             },
 
             updateSyncStatus(connected) {
@@ -2293,6 +2337,11 @@
             },
 
             async orderPickedUp(firebaseKey) {
+                if (!window.db || !window.dbRef || !window.dbGet || !window.dbSet) {
+                    await this.showNotification('Database not available', '⚠️', 'ERROR');
+                    return;
+                }
+                
                 try {
                     // Get the order data
                     const orderSnapshot = await window.dbGet(window.dbRef(window.db, `pickup-orders/${firebaseKey}`));
@@ -2313,9 +2362,11 @@
                         
                         this.playSound('success');
                         await this.showNotification('Order marked as picked up!', '✓', 'SUCCESS');
+                        console.log('Order picked up and moved to history:', order.id);
                     }
                 } catch (error) {
                     console.error('Error marking order as picked up:', error);
+                    await this.showNotification('Error marking order as picked up', '⚠️', 'ERROR');
                 }
             },
 
@@ -2375,6 +2426,11 @@
             },
 
             async completeOrder(firebaseKey) {
+                if (!window.db || !window.dbRef || !window.dbGet || !window.dbSet) {
+                    await this.showNotification('Database not available', '⚠️', 'ERROR');
+                    return;
+                }
+                
                 try {
                     // Get the order data first
                     const orderSnapshot = await window.dbGet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`));
@@ -2392,9 +2448,11 @@
                         await window.dbSet(window.dbRef(window.db, `kitchen-orders/${firebaseKey}`), null);
                         
                         this.playSound('success');
+                        console.log('Order completed and moved to pickup:', order.id);
                     }
                 } catch (error) {
                     console.error('Error completing order:', error);
+                    await this.showNotification('Error completing order', '⚠️', 'ERROR');
                 }
             },
 
@@ -2855,6 +2913,11 @@
             },
 
             async sendToKitchen(preorderId) {
+                if (!window.db || !window.dbRef || !window.dbGet || !window.dbSet) {
+                    await this.showNotification('Database not available', '⚠️', 'ERROR');
+                    return;
+                }
+                
                 try {
                     const snapshot = await window.dbGet(window.dbRef(window.db, 'preorders'));
                     const preorders = snapshot.val();
@@ -2869,17 +2932,27 @@
                                     return;
                                 }
                                 
-                                await window.dbSet(window.dbRef(window.db, `preorders/${key}/status`), 'in-kitchen');
-                                
+                                // Create kitchen order from preorder
                                 const kitchenOrder = {
                                     ...preorder,
                                     timestamp: new Date().toISOString(),
+                                    displayTime: new Date().toLocaleString('en-MY', { 
+                                        day: '2-digit',
+                                        month: 'short',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    }),
                                     status: 'pending',
                                     orderType: 'preorder' // Mark as preorder
                                 };
                                 
+                                // Send to kitchen
                                 await this.addOrderToKitchen(kitchenOrder);
-                                await this.updateShiftStats(kitchenOrder);
+                                
+                                // Remove from preorders (it's now in kitchen)
+                                await window.dbSet(window.dbRef(window.db, `preorders/${key}`), null);
+                                
                                 this.playSound('success');
                                 await this.showNotification('Order sent to kitchen!', '✓', 'SUCCESS');
                                 break;
@@ -2888,6 +2961,7 @@
                     }
                 } catch (error) {
                     console.error('Error sending to kitchen:', error);
+                    await this.showNotification('Error sending to kitchen', '⚠️', 'ERROR');
                 }
             },
 
