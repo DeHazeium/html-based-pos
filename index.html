@@ -241,17 +241,15 @@
             border-radius: 4px;
             position: relative;
             overflow: hidden;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .menu-item-content {
-            flex: 1;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 20px;
+            position: relative;
+            z-index: 1;
         }
 
         .menu-item::before {
@@ -286,6 +284,11 @@
             text-align: left;
             margin: 0;
             color: var(--text-primary);
+            flex: 1;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            padding-right: 15px;
+            line-height: 1.3;
         }
 
         .price {
@@ -295,6 +298,8 @@
             letter-spacing: 2px;
             font-weight: 600;
             white-space: nowrap;
+            flex-shrink: 0;
+            text-align: right;
         }
 
         .category-filter {
@@ -2181,40 +2186,66 @@
                     return;
                 }
 
-                pickupDiv.innerHTML = orderArray.map(order => {
-                    // Consolidate items
-                    const consolidatedItems = this.consolidateItems(order.items);
-                    const orderTypeBadge = order.orderType === 'preorder' 
-                        ? '<div class="order-badge preorder">Preorder</div>' 
-                        : '';
-                    
-                    return `
-                        <div class="kitchen-order" style="border-left: 4px solid var(--accent);">
-                            ${orderTypeBadge}
-                            <div style="text-align: center; margin-bottom: 20px;">
-                                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); margin-bottom: 10px;">
-                                    ${order.customerName || 'ORDER #' + order.id.toString().slice(-4)}
-                                </div>
-                                <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">
-                                    ${order.displayTime} • ${order.paymentMethod.toUpperCase()}
-                                </div>
+                // Separate preorders and walk-in orders
+                const preorders = orderArray.filter(order => order.orderType === 'preorder');
+                const walkIns = orderArray.filter(order => order.orderType !== 'preorder');
+
+                let html = '';
+
+                // Preorder Section
+                html += '<div style="margin-bottom: 40px;">';
+                html += '<div style="font-family: \'Bebas Neue\', sans-serif; font-size: 28px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent);">PREORDER</div>';
+                
+                if (preorders.length === 0) {
+                    html += '<div style="text-align: center; color: var(--text-secondary); padding: 30px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px;">No preorders ready</div>';
+                } else {
+                    html += preorders.map(order => this.renderPickupOrder(order)).join('');
+                }
+                html += '</div>';
+
+                // Walk-in Section
+                html += '<div>';
+                html += '<div style="font-family: \'Bebas Neue\', sans-serif; font-size: 28px; letter-spacing: 3px; color: var(--accent); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--accent);">WALK-IN</div>';
+                
+                if (walkIns.length === 0) {
+                    html += '<div style="text-align: center; color: var(--text-secondary); padding: 30px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 4px;">No walk-in orders ready</div>';
+                } else {
+                    html += walkIns.map(order => this.renderPickupOrder(order)).join('');
+                }
+                html += '</div>';
+
+                pickupDiv.innerHTML = html;
+            },
+
+            renderPickupOrder(order) {
+                // Consolidate items
+                const consolidatedItems = this.consolidateItems(order.items);
+                
+                return `
+                    <div class="kitchen-order" style="border-left: 4px solid var(--accent); margin-bottom: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 48px; letter-spacing: 4px; color: var(--accent); margin-bottom: 10px;">
+                                ${order.customerName || 'ORDER #' + order.id.toString().slice(-4)}
                             </div>
-                            <ul>
-                                ${consolidatedItems.map(item => {
-                                    const itemTotal = item.price * item.quantity;
-                                    return `
-                                        <li>
-                                            <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
-                                            <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
-                                        </li>
-                                    `;
-                                }).join('')}
-                            </ul>
-                            <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
-                            <button class="action-btn" style="background: var(--accent); border-color: var(--accent); color: var(--bg-primary);" onclick="app.orderPickedUp('${order.firebaseKey}')">ORDER PICKED UP</button>
+                            <div style="font-size: 12px; color: var(--text-secondary); letter-spacing: 2px;">
+                                ${order.displayTime} • ${order.paymentMethod.toUpperCase()}
+                            </div>
                         </div>
-                    `;
-                }).join('');
+                        <ul>
+                            ${consolidatedItems.map(item => {
+                                const itemTotal = item.price * item.quantity;
+                                return `
+                                    <li>
+                                        <span>${item.name} ${item.quantity > 1 ? `<strong>(x${item.quantity})</strong>` : ''}</span>
+                                        <span>RM ${item.quantity > 1 ? itemTotal.toFixed(2) : item.price.toFixed(2)}</span>
+                                    </li>
+                                `;
+                            }).join('')}
+                        </ul>
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid var(--border); font-family: 'Bebas Neue', sans-serif; font-size: 24px; text-align: center;">TOTAL: RM ${order.total.toFixed(2)}</div>
+                        <button class="action-btn" style="background: var(--accent); border-color: var(--accent); color: var(--bg-primary);" onclick="app.orderPickedUp('${order.firebaseKey}')">ORDER PICKED UP</button>
+                    </div>
+                `;
             },
 
             async orderPickedUp(firebaseKey) {
