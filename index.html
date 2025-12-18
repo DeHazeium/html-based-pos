@@ -2110,18 +2110,23 @@
                         hasDiscount = true;
                         totalDiscount += (originalPrice - currentPrice) * quantity;
                     }
-                    
                     for (let i = 0; i < quantity; i++) {
-                        expandedItems.push({
+                        const expandedItem = {
                             id: item.id,
                             name: item.name,
-                            price: currentPrice, // Use discounted price if available
+                            price: currentPrice,
                             originalPrice: originalPrice,
                             category: item.category,
-                            hasDiscount: item.discountedPrice !== undefined && item.discountedPrice !== item.price,
-                            discountType: item.discountType,
-                            discountAmount: item.discountAmount
-                        });
+                            hasDiscount: item.discountedPrice !== undefined && item.discountedPrice !== item.price
+                        };
+                        // Only add discount properties if they exist
+                        if (item.discountType !== undefined) {
+                            expandedItem.discountType = item.discountType;
+                        }
+                        if (item.discountAmount !== undefined) {
+                            expandedItem.discountAmount = item.discountAmount;
+                        }
+                        expandedItems.push(expandedItem);
                     }
                 });
 
@@ -3801,3 +3806,4 @@
     </script>
 </body>
 </html>
+
