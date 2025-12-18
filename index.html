@@ -30,7 +30,6 @@
             background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             color: var(--text-primary);
             min-height: 100vh;
-            padding-bottom: 80px; /* Space for footer */
         }
 
         .login-screen {
@@ -236,48 +235,23 @@
         .menu-item {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            padding: 0;
+            padding: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
             border-radius: 4px;
             position: relative;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
-        }
-
-        .menu-item-image {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-            background: var(--bg-tertiary);
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            font-size: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-item-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .menu-item-image .placeholder {
-            font-size: 40px;
         }
 
         .menu-item-content {
-            padding: 20px;
             flex: 1;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
         }
 
         .menu-item::before {
@@ -297,31 +271,30 @@
 
         .menu-item:hover {
             border-color: var(--accent);
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             box-shadow: 0 5px 20px rgba(0, 255, 136, 0.2);
         }
 
         .menu-item:active {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .menu-item h3 {
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .menu-item h3 {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 500;
-            margin-bottom: 12px;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            text-align: left;
+            margin: 0;
+            color: var(--text-primary);
         }
 
         .price {
-            color: var(--text-secondary);
-            font-size: 14px;
+            color: var(--accent);
+            font-size: 20px;
             font-family: 'Bebas Neue', sans-serif;
             letter-spacing: 2px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .category-filter {
@@ -1530,47 +1503,11 @@
                 </div>
             </div>
 
-            <!-- Logo Management Section -->
-            <div style="margin-bottom: 30px; padding: 20px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px;">
-                <div style="font-size: 16px; font-weight: 600; margin-bottom: 15px;">Footer Logos</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">UiTM Logo URL</label>
-                        <input type="text" id="uitmLogoUrl" placeholder="Paste image URL (60x60px recommended)" style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 10px; color: var(--text-primary); font-size: 12px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 8px;">UGLAM Logo URL</label>
-                        <input type="text" id="uglamLogoUrl" placeholder="Paste image URL (60x60px recommended)" style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border); padding: 10px; color: var(--text-primary); font-size: 12px; font-family: 'Montserrat', sans-serif; border-radius: 4px;">
-                    </div>
-                </div>
-            </div>
-
             <div id="stockItemsList"></div>
 
             <div style="margin-top: 20px; text-align: center;">
                 <button class="submit-btn" onclick="app.saveStock()">SAVE CHANGES</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Footer with Logos -->
-    <div style="position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: var(--bg-primary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; z-index: 100;">
-        <!-- UiTM Logo Left -->
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <img id="uitmLogo" src="" alt="UiTM" style="height: 60px; width: 60px; object-fit: contain; display: none;" onerror="this.style.display='none'; document.getElementById('uitmPlaceholder').style.display='flex';">
-            <div id="uitmPlaceholder" style="width: 60px; height: 60px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); text-align: center; padding: 5px;">UiTM</div>
-        </div>
-
-        <!-- Center Credits -->
-        <div style="text-align: center;">
-            <div style="font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 3px;">Developed by Muhammad Irfan</div>
-            <a href="https://instagram.com/hzetronics" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 10px; letter-spacing: 1px; transition: opacity 0.3s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">@hzetronics</a>
-        </div>
-
-        <!-- UGLAM Logo Right -->
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <img id="uglamLogo" src="" alt="UGLAM" style="height: 60px; width: 60px; object-fit: contain; display: none;" onerror="this.style.display='none'; document.getElementById('uglamPlaceholder').style.display='flex';">
-            <div id="uglamPlaceholder" style="width: 60px; height: 60px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-secondary); text-align: center; padding: 5px;">UGLAM</div>
         </div>
     </div>
 
@@ -1659,60 +1596,9 @@
                     console.log('Could not load stock status:', e.message);
                 }
                 
-                try {
-                    await this.loadMenuImages();
-                } catch (e) {
-                    console.log('Could not load menu images:', e.message);
-                }
-                
-                try {
-                    await this.loadLogos();
-                } catch (e) {
-                    console.log('Could not load logos:', e.message);
-                }
-                
                 this.renderMenu();
                 this.setupFirebaseListeners();
                 this.initializeShift();
-            },
-
-            async loadLogos() {
-                try {
-                    const snapshot = await window.dbGet(window.dbRef(window.db, 'logos'));
-                    if (snapshot.exists()) {
-                        const logos = snapshot.val();
-                        
-                        if (logos.uitm) {
-                            const uitmImg = document.getElementById('uitmLogo');
-                            const uitmPlaceholder = document.getElementById('uitmPlaceholder');
-                            uitmImg.src = logos.uitm;
-                            uitmImg.style.display = 'block';
-                            uitmPlaceholder.style.display = 'none';
-                        }
-                        
-                        if (logos.uglam) {
-                            const uglamImg = document.getElementById('uglamLogo');
-                            const uglamPlaceholder = document.getElementById('uglamPlaceholder');
-                            uglamImg.src = logos.uglam;
-                            uglamImg.style.display = 'block';
-                            uglamPlaceholder.style.display = 'none';
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error loading logos:', error);
-                }
-            },
-
-            async saveLogos(uitmUrl, uglamUrl) {
-                try {
-                    const logos = {
-                        uitm: uitmUrl || '',
-                        uglam: uglamUrl || ''
-                    };
-                    await window.dbSet(window.dbRef(window.db, 'logos'), logos);
-                } catch (error) {
-                    console.error('Error saving logos:', error);
-                }
             },
 
             async loadStockStatus() {
@@ -1827,14 +1713,9 @@
                         stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                     }
                     
-                    const imageContent = item.image && item.image.trim() !== ''
-                        ? `<img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display: block;"><div class="placeholder" style="display: none;">🍽️</div>` 
-                        : '<div class="placeholder">🍽️</div>';
-                    
                     return `
                         <div class="menu-item ${isOutOfStock ? 'disabled' : ''}" onclick="${isOutOfStock ? '' : `app.addToOrder(${item.id})`}" style="${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                             ${stockBadge}
-                            <div class="menu-item-image">${imageContent}</div>
                             <div class="menu-item-content">
                                 <h3>${item.name}</h3>
                                 <div class="price">RM ${item.price.toFixed(2)}</div>
@@ -2565,14 +2446,9 @@
                         stockBadge = '<div style="position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--bg-primary); padding: 6px 10px; font-size: 10px; font-weight: 700; letter-spacing: 1px; z-index: 10; border-radius: 2px;">IN STOCK</div>';
                     }
                     
-                    const imageContent = item.image && item.image.trim() !== ''
-                        ? `<img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" style="display: block;"><div class="placeholder" style="display: none;">🍽️</div>` 
-                        : '<div class="placeholder">🍽️</div>';
-                    
                     return `
                         <div class="menu-item ${isOutOfStock ? 'disabled' : ''}" onclick="${isOutOfStock ? '' : `app.addToPreorder(${item.id})`}" style="${isOutOfStock ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
                             ${stockBadge}
-                            <div class="menu-item-image">${imageContent}</div>
                             <div class="menu-item-content">
                                 <h3>${item.name}</h3>
                                 <div class="price">RM ${item.price.toFixed(2)}</div>
@@ -3436,18 +3312,6 @@
                 // Update status text
                 this.updateStockStatusText();
                 
-                // Load current logo URLs
-                try {
-                    const snapshot = await window.dbGet(window.dbRef(window.db, 'logos'));
-                    if (snapshot.exists()) {
-                        const logos = snapshot.val();
-                        document.getElementById('uitmLogoUrl').value = logos.uitm || '';
-                        document.getElementById('uglamLogoUrl').value = logos.uglam || '';
-                    }
-                } catch (error) {
-                    console.error('Error loading logo URLs:', error);
-                }
-                
                 this.renderStockList();
                 document.getElementById('stockManagerModal').classList.add('active');
                 this.playSound('click');
@@ -3485,19 +3349,13 @@
                         ? '<span class="stock-badge ok">In Stock</span>'
                         : '<span class="stock-badge out">Out of Stock</span>';
                     
-                    const imagePreview = item.image 
-                        ? `<img src="${item.image}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">` 
-                        : '<div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); border-radius: 4px; border: 1px solid var(--border); font-size: 32px;">🍽️</div>';
-                    
                     return `
-                        <div class="stock-item-row" style="padding: 20px;">
-                            ${imagePreview}
-                            <div class="stock-item-info" style="flex: 2; margin-left: 15px;">
-                                <div class="stock-item-name" style="font-size: 16px;">${item.name}</div>
-                                <div class="stock-item-price" style="margin-bottom: 10px;">RM ${item.price.toFixed(2)}</div>
-                                <input type="text" class="stock-input" placeholder="Paste image URL here (optional)" value="${item.image || ''}" data-item-id="${item.id}" data-field="image" style="width: 100%; text-align: left; font-size: 12px; padding: 10px;">
+                        <div class="stock-item-row" style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                            <div class="stock-item-info">
+                                <div class="stock-item-name" style="font-size: 16px; margin-bottom: 5px;">${item.name}</div>
+                                <div class="stock-item-price">RM ${item.price.toFixed(2)}</div>
                             </div>
-                            <div class="stock-input-group" style="flex-direction: column; align-items: flex-end; gap: 15px;">
+                            <div style="display: flex; align-items: center; gap: 20px;">
                                 ${badge}
                                 <label style="position: relative; display: inline-block; width: 70px; height: 40px; cursor: pointer;">
                                     <input type="checkbox" ${item.inStock ? 'checked' : ''} onchange="app.toggleItemStock(${item.id})" style="opacity: 0; width: 0; height: 0;">
@@ -3520,60 +3378,13 @@
             },
 
             async saveStock() {
-                const inputs = document.querySelectorAll('.stock-input');
-                inputs.forEach(input => {
-                    const itemId = parseInt(input.dataset.itemId);
-                    const field = input.dataset.field;
-                    const item = this.menuItems.find(i => i.id === itemId);
-                    
-                    if (item && field === 'image') {
-                        item.image = input.value.trim();
-                    }
-                });
-                
-                // Save logos
-                const uitmUrl = document.getElementById('uitmLogoUrl').value.trim();
-                const uglamUrl = document.getElementById('uglamLogoUrl').value.trim();
-                
                 await this.saveStockStatus(); // Save to Firebase
-                await this.saveMenuImages(); // Save images to Firebase
-                await this.saveLogos(uitmUrl, uglamUrl); // Save logos to Firebase
-                await this.loadLogos(); // Reload logos to display
                 this.renderMenu(); // Refresh menu display
                 this.closeStockManager();
                 this.playSound('success');
-                await this.showNotification('Stock status, images, and logos updated successfully!', '✓', 'SUCCESS');
+                await this.showNotification('Stock status updated successfully!', '✓', 'SUCCESS');
             },
 
-            async saveMenuImages() {
-                try {
-                    const imageData = {};
-                    this.menuItems.forEach(item => {
-                        if (item.image && item.image.trim() !== '') {
-                            imageData[item.id] = item.image;
-                        }
-                    });
-                    await window.dbSet(window.dbRef(window.db, 'menu-images'), imageData);
-                } catch (error) {
-                    console.error('Error saving menu images:', error);
-                }
-            },
-
-            async loadMenuImages() {
-                try {
-                    const snapshot = await window.dbGet(window.dbRef(window.db, 'menu-images'));
-                    if (snapshot.exists()) {
-                        const imageData = snapshot.val();
-                        this.menuItems.forEach(item => {
-                            if (imageData[item.id]) {
-                                item.image = imageData[item.id];
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error loading menu images:', error);
-                }
-            },
         };
 
         // CRITICAL: Expose app to window IMMEDIATELY for onclick handlers
