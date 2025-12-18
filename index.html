@@ -1592,19 +1592,24 @@
         };
 
         // Initialize Firebase
-        const firebaseApp = initializeApp(firebaseConfig);
-        const database = getDatabase(firebaseApp);
+        try {
+            const firebaseApp = initializeApp(firebaseConfig);
+            const database = getDatabase(firebaseApp);
 
-        // Expose Firebase functions to global scope
-        window.db = database;
-        window.dbRef = ref;
-        window.dbSet = set;
-        window.dbPush = push;
-        window.dbGet = get;
-        window.dbOnValue = onValue;
-        window.dbRemove = remove;
+            // Expose Firebase functions to global scope
+            window.db = database;
+            window.dbRef = ref;
+            window.dbSet = set;
+            window.dbPush = push;
+            window.dbGet = get;
+            window.dbOnValue = onValue;
+            window.dbRemove = remove;
 
-        console.log('Firebase initialized successfully');
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            console.log('App will continue without Firebase...');
+        }
     </script>
 
     <!-- Main Application Script -->
